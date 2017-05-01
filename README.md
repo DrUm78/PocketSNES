@@ -22,19 +22,18 @@ make
 # Keyboard Controls
 
 Menu:
-cursor keys = UP/DOWN - ENABLE/DISABLE (option)
-i = SELECT (option)
-j = BACK
+* cursor keys = UP/DOWN - ENABLE/DISABLE (option)
+* i = SELECT (option)
+* j = BACK
 
 In-game:
-cursor keys = UP/DOWN/LEFT/RIGHT
-i = A
-j = B
-u = X
-h = Y 
-v = START
-c = SELECT
-o = L
-k = R
-
-c+v (at once) = MENU
+* cursor keys = UP/DOWN/LEFT/RIGHT
+* i = A
+* j = B
+* u = X
+* h = Y 
+* v = START
+* c = SELECT
+* o = L
+* k = R
+* c+v (at once) = MENU
