@@ -37,3 +37,26 @@ In-game:
 * o = L
 * k = R
 * c+v (at once) = MENU
+
+# Change the Keyboard Controls
+
+The keyboard controls are currently hard-coded in `sal/linux/sal.c`. Find the following lines, change as desired and re-compile with make. 
+
+```
+switch(event.key.keysym.sym) {
+		CASE(LCTRL, A);
+		CASE(LALT, B);
+		CASE(SPACE, X);
+		CASE(LSHIFT, Y);
+		CASE(TAB, L);
+		CASE(BACKSPACE, R);
+		CASE(RETURN, START);
+		CASE(ESCAPE, SELECT);
+		CASE(UP, UP);
+		CASE(DOWN, DOWN);
+		CASE(LEFT, LEFT);
+		CASE(RIGHT, RIGHT);
+		CASE(HOME, MENU);
+    default: break;
+}
+```
