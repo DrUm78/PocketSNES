@@ -56,6 +56,7 @@ static u32 sal_Input(int held)
 		CASE(l, LEFT);
 		CASE(r, RIGHT);
 		CASE(h, MENU);
+		CASE(e, EXIT);
 		default: break;
 	}
 
@@ -230,6 +231,9 @@ u32 sal_VideoInit(u32 bpp)
 		sal_LastErrorSet("SDL_SetVideoMode failed");        	
 		return SAL_ERROR;
     	}
+
+	// Set window name
+	SDL_WM_SetCaption("Game", NULL);
 
     	// lock surface if needed 
 	if (SDL_MUSTLOCK(mScreen)) 

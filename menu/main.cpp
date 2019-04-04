@@ -33,6 +33,7 @@ static s8 mQuickStateDisplay[16]={""};
 static u32 mFps=0;
 static u32 mLastTimer=0;
 static u32 mEnterMenu=0;
+static u32 mExit=0;
 static u32 mLoadRequested=0;
 static u32 mSaveRequested=0;
 static u32 mQuickStateTimer=0;
@@ -214,7 +215,7 @@ bool8_32 S9xDeinitUpdate (int Width, int Height, bool8_32)
 	}
 
 	u32 newTimer;
-	if (mMenuOptions.showFps) 
+	if (mMenuOptions.showFps)
 	{
 		mFps++;
 		newTimer=sal_TimerRead();
@@ -270,6 +271,11 @@ uint32 S9xReadJoypad (int which1)
 	 || (joy & SAL_INPUT_MENU))
 	{
 		mEnterMenu = 1;		
+		return val;
+	}
+	else if(joy & SAL_INPUT_EXIT){
+		printf("EXIT !!!\n");
+		mExit = 1;
 		return val;
 	}
 
@@ -484,7 +490,7 @@ int Run(int sound)
 	}
 	sal_AudioResume();
 
-  	while(!mEnterMenu) 
+	while(!mEnterMenu)
   	{
 		//Run SNES for one glorious frame
 		S9xMainLoop ();
@@ -514,14 +520,14 @@ static inline int RunNoSound(void)
 	return Run(0);
 }
 
-static 
+static
 int SnesRomLoad()
 {
 	char filename[SAL_MAX_PATH+1];
 	int check;
 	char text[256];
 	FILE *stream=NULL;
-  
+
     	MenuMessageBox("Loading ROM...",mRomName,"",MENU_MESSAGE_BOX_MODE_MSG);
 
 	if (!Memory.LoadROM (mRomName))
@@ -593,8 +599,8 @@ int SnesInit()
 	GFX.Screen = (uint8*) IntermediateScreen;
 	GFX.RealPitch = GFX.Pitch = 256 * sizeof(u16);
 	
-	GFX.SubScreen = (uint8 *)malloc(GFX.RealPitch * 480 * 2); 
-	GFX.ZBuffer =  (uint8 *)malloc(GFX.RealPitch * 480 * 2); 
+	GFX.SubScreen = (uint8 *)malloc(GFX.RealPitch * 480 * 2);
+	GFX.ZBuffer =  (uint8 *)malloc(GFX.RealPitch * 480 * 2);
 	GFX.SubZBuffer = (uint8 *)malloc(GFX.RealPitch * 480 * 2);
 	GFX.Delta = (GFX.SubScreen - GFX.Screen) >> 1;
 	GFX.PPL = GFX.Pitch >> 1;
@@ -688,7 +694,7 @@ void _splitpath (const char *path, char *drive, char *dir, char *fname,
 		else
 			strcpy (ext, "");
 	}
-} 
+}
 
 extern "C"
 {
@@ -703,7 +709,7 @@ int mainEntry(int argc, char* argv[])
 	sal_VideoInit(16);
 
 	mRomName[0]=0;
-	if (argc >= 2) 
+	if (argc >= 2)
  		strcpy(mRomName, argv[1]); // Record ROM name
 
 	MenuInit(sal_DirectoryGetHome(), &mMenuOptions);
@@ -715,7 +721,7 @@ int mainEntry(int argc, char* argv[])
 		return 0;
 	}
 
-	while(1)
+	while(!mExit)
 	{
 		mInMenu=1;
 		event=MenuRun(mRomName);
@@ -728,7 +734,7 @@ int mainEntry(int argc, char* argv[])
 				MenuMessageBox("Saving SRAM...","","",MENU_MESSAGE_BOX_MODE_MSG);
 				PSNESForceSaveSRAM();
 			}
-			if(SnesRomLoad() == SAL_ERROR) 
+			if(SnesRomLoad() == SAL_ERROR)
 			{
 				mRomName[0] = 0;
 				MenuMessageBox("Failed to load ROM",mRomName,"Press any button to continue", MENU_MESSAGE_BOX_MODE_PAUSE);

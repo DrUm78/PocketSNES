@@ -40,9 +40,9 @@ static u16 mTempFb[SNES_WIDTH*SNES_HEIGHT_EXTENDED];
 void DefaultMenuOptions(void)
 {
 	mMenuOptions->frameSkip=0;   //auto
-	mMenuOptions->soundEnabled = 1; 
-	mMenuOptions->volume=25; 
-	mMenuOptions->cpuSpeed=336; 
+	mMenuOptions->soundEnabled = 1;
+	mMenuOptions->volume=25;
+	mMenuOptions->cpuSpeed=336;
 	mMenuOptions->country=0;
 	mMenuOptions->showFps=0;
 	mMenuOptions->soundRate=44100;
@@ -153,16 +153,16 @@ s32 MenuMessageBox(const char *message1, const char *message2,
   s32 select=0;
   s32 subaction=-1;
   u32 keys=0;
-  
+
   sal_InputIgnore();
   while(subaction==-1)
   {
      keys=sal_InputPollRepeat();
-     if (keys & SAL_INPUT_UP) 
+     if (keys & SAL_INPUT_UP)
      {
        select=SAL_OK; // Up
      }
-     if (keys & SAL_INPUT_DOWN) 
+     if (keys & SAL_INPUT_DOWN)
      {
        select=SAL_ERROR; // Down
      }
@@ -190,7 +190,7 @@ s32 MenuMessageBox(const char *message1, const char *message2,
 	          sal_VideoPrint(8,140,"NO",SAL_RGB(31,31,31));
 	       }
 	       break;
-	case MENU_MESSAGE_BOX_MODE_PAUSE: 
+	case MENU_MESSAGE_BOX_MODE_PAUSE:
 			PrintBar(120-4);
 			sal_VideoPrint(8,120,"Press button to continue",SAL_RGB(31,31,31));
 			break;
@@ -492,7 +492,7 @@ s32 FileSelect()
 							sal_DirectoryGetParent(mRomDir);
 							FileScan();
 							focus=ROM_SELECTOR_DEFAULT_FOCUS; // default menu to non menu item
-														// just to stop directory scan being started 
+														// just to stop directory scan being started
 							smooth=focus<<8;
 							sal_InputIgnore();
 							break;
@@ -503,7 +503,7 @@ s32 FileSelect()
 							sal_DirectoryCombine(mRomDir,mRomList[focus].filename);
 							FileScan();
 							focus=ROM_SELECTOR_DEFAULT_FOCUS; // default menu to non menu item
-														// just to stop directory scan being started 
+														// just to stop directory scan being started
 							smooth=focus<<8;
 						}
 					}
@@ -590,12 +590,12 @@ s32 FileSelect()
 		for (i=scanstart;i<scanend;i++)
 		{
 			s32 x=0,y=0;
-      
+
 			y=(i<<4)-(smooth>>4);
 			x=0;
 			y+=112 - 28;
 			if (y<=48 - 28 || y>=232 - 36) continue;
-           
+
 			if (i==focus)
 			{
 				color=SAL_RGB(31,31,31);
@@ -606,7 +606,7 @@ s32 FileSelect()
 				color=SAL_RGB(31,31,31);
 			}
 
-			 
+
 			// Draw Directory icon if current entry is a directory
 			if(mRomList[i].type == SAL_FILE_TYPE_DIRECTORY)
 			{
@@ -646,7 +646,7 @@ static void ScanSaveStates(s8 *romname)
 	sal_DirectorySplitFilename(romname,path,filename,ext);
 
 	sprintf(savename,"%s.%s",filename,SAVESTATE_EXT);
-  
+
 	for(i=0;i<10;i++)
 	{
 		/*
@@ -682,7 +682,7 @@ bool8 LoadStateTemp()
 	return ret;
 }
 
-static 
+static
 void SaveStateTemp()
 {
 	char name[SAL_MAX_PATH];
@@ -708,7 +708,7 @@ bool8 LoadStateFile(s8 *filename)
 	return ret;
 }
 
-static 
+static
 void SaveStateFile(s8 *filename)
 {
 	if (!S9xFreezeGame(filename))
@@ -747,7 +747,7 @@ static s32 SaveStateSelect(s32 mode)
 		if(keys&SAL_INPUT_DOWN) {saveno++; action=1;}
 		if(saveno<-1) saveno=9;
 		if(saveno>9) saveno=-1;
-	      
+
 		if(keys&INP_BUTTON_MENU_CANCEL) action=0; // exit
 		else if((keys&INP_BUTTON_MENU_SELECT)&&(saveno==-1)) action=0; // exit
 		else if((keys&INP_BUTTON_MENU_SELECT)&&(mode==0)&&((action==2)||(action==5))) action=6;  // pre-save mode
@@ -766,10 +766,10 @@ static s32 SaveStateSelect(s32 mode)
 
 		PrintTitle("Save States");
 		sal_VideoPrint(36,4,"UP/DOWN to choose a slot",SAL_RGB(31,8,8));
-      
-		if(saveno==-1) 
+
+		if(saveno==-1)
 		{
-			if(action!=10&&action!=0) 
+			if(action!=10&&action!=0)
 			{
 				action=10;
 			}
@@ -780,7 +780,7 @@ static s32 SaveStateSelect(s32 mode)
 			sprintf(text,"SLOT %d",saveno);
 			sal_VideoPrint(107,20,text,SAL_RGB(31,31,31));
 		}
-      
+
 		switch(action)
 		{
 			case 1:
@@ -795,7 +795,7 @@ static s32 SaveStateSelect(s32 mode)
 			case 4:
 				sal_VideoPrint(59,145-36,"Previewing failed",SAL_RGB(31,8,8));
 				break;
-			case 5: 
+			case 5:
 			{
 				u32 DestWidth = 205, DestHeight = 154;
 				sal_VideoBitmapScale(0, 0, SNES_WIDTH, SNES_HEIGHT, DestWidth, DestHeight, SAL_SCREEN_WIDTH - DestWidth, &mTempFb[0], (u16*)sal_VideoGetBuffer()+(SAL_SCREEN_WIDTH*(((202 + 16) - DestHeight)/2))+((262 - DestWidth)/2));
@@ -834,17 +834,17 @@ static s32 SaveStateSelect(s32 mode)
 				sal_VideoPrint(87,145-36,"Deleting...",SAL_RGB(31,31,31));
 				break;
 		}
-      
+
 		sal_VideoFlip(1);
-      
+
 		switch(action)
 		{
 			case 1:
-				if(mSaveState[saveno].inUse) 
+				if(mSaveState[saveno].inUse)
 				{
 					action=3;
 				}
-				else 
+				else
 				{
 					action=2;
 				}
@@ -928,7 +928,7 @@ void RenderMenu(const char *menuName, s32 menuCount, s32 menuSmooth, s32 menufoc
       		y+=112 - 28;
 
       		if (y<=48 - 28 || y>=232 - 36) continue;
-      
+
       		if (i==menufocus)
       		{
         		color=SAL_RGB(31,31,31);
@@ -1061,15 +1061,15 @@ void ShowCredits()
 		if (keys & SAL_INPUT_UP) menufocus--; // Up
 		if (keys & SAL_INPUT_DOWN) menufocus++; // Down
 
-    
+
 		if (keys&INP_BUTTON_MENU_CANCEL) menuExit=1;
-    
+
 		if (menufocus>menuCount-1)
 		{
 			menufocus=0;
 			menuSmooth=(menufocus<<8)-1;
-		}   
-		else if (menufocus<0) 
+		}
+		else if (menufocus<0)
 		{
 			menufocus=menuCount-1;
 			menuSmooth=(menufocus<<8)-1;
@@ -1084,7 +1084,7 @@ void ShowCredits()
   	sal_InputIgnore();
 }
 
-static 
+static
 void MainMenuUpdateText(s32 menu_index)
 {
 	switch(menu_index)
@@ -1155,7 +1155,7 @@ void MainMenuUpdateText(s32 menu_index)
 			break;
 #endif
 		
-		case MENU_FRAMESKIP: 
+		case MENU_FRAMESKIP:
 			switch(mMenuOptions->frameSkip)
 			{
 				case 0:
@@ -1177,7 +1177,7 @@ void MainMenuUpdateText(s32 menu_index)
 					break;
 				case 1:
 					strcpy(mMenuText[MENU_FPS],"Show FPS:                   ON");
-					break;  
+					break;
 			}
 			break;
 
@@ -1189,10 +1189,10 @@ void MainMenuUpdateText(s32 menu_index)
 					break;
 				case 1:
 					strcpy(mMenuText[MENU_FULLSCREEN],"Full screen:              FAST");
-					break;  
+					break;
 				case 2:
 					strcpy(mMenuText[MENU_FULLSCREEN],"Full screen:            SMOOTH");
-					break;  
+					break;
 				case 3:
 					strcpy(mMenuText[MENU_FULLSCREEN],"Full screen:          HARDWARE");
 					break;
@@ -1342,6 +1342,12 @@ s32 MenuRun(s8 *romName)
 		sal_VideoFlip(1);
 
 		keys=sal_InputPollRepeat();
+
+		if(keys & INP_BUTTON_MENU_EXIT){
+			action = EVENT_EXIT_APP;
+			menuExit=1;
+			break;
+		}
 
 		if (keys & INP_BUTTON_MENU_SELECT)
 		{
