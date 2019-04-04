@@ -8,7 +8,7 @@ Just to collect the patches for running PocketSNES on PocketCHIP and CHIP.
 
 ```
 sudo apt install libsdl1.2-dev build-essential  git --no-install-recommends
-git clone https://github.com/buzztiaan/PocketSNES.git
+git clone git clone https://busebusemac@bitbucket.org/keymu2/funkey_emulator_pocketsnes.git
 cd PocketSNES
 make
 ```

@@ -180,12 +180,16 @@ bool8_32 S9xDeinitUpdate (int Width, int Height, bool8_32)
 		{
 			u32 h = PAL ? SNES_HEIGHT_EXTENDED : SNES_HEIGHT;
 			u32 y, pitch = sal_VideoGetPitch();
-			u8 *src = (u8*) IntermediateScreen, *dst = (u8*) sal_VideoGetBuffer()
+			u8 *src = (u8*) IntermediateScreen;
+			/*u8 *dst = (u8*) sal_VideoGetBuffer()
 				+ ((sal_VideoGetWidth() - SNES_WIDTH) / 2) * sizeof(u16)
+				+ ((sal_VideoGetHeight() - h) / 2) * pitch;*/
+			u8 *dst = (u8*) sal_VideoGetBuffer()
 				+ ((sal_VideoGetHeight() - h) / 2) * pitch;
 			for (y = 0; y < h; y++)
 			{
-				memcpy(dst, src, SNES_WIDTH * sizeof(u16));
+				//memcpy(dst, src, SNES_WIDTH * sizeof(u16));
+				memcpy(dst, src+(SNES_WIDTH-240)/2, 240 * sizeof(u16));
 				src += SNES_WIDTH * sizeof(u16);
 				dst += pitch;
 			}

@@ -27,7 +27,8 @@ INCLUDE = -I pocketsnes \
 CFLAGS = $(INCLUDE) -DRC_OPTIMIZED -D__LINUX__ -D__DINGUX__ -DNO_ROM_BROWSER \
 		 -DGCW_ZERO \
 		 -g -O3 -pipe -ffast-math $(SDL_CFLAGS) \
-		 -flto -fomit-frame-pointer -fexpensive-optimizations -mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=neon
+		 -flto -fomit-frame-pointer -fexpensive-optimizations
+#-mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=neon
 
 CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
 

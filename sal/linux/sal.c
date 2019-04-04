@@ -43,19 +43,19 @@ static u32 sal_Input(int held)
 
 	Uint8 type = (event.key.state == SDL_PRESSED);
 	switch(event.key.keysym.sym) {
-		CASE(i, A);
-		CASE(j, B);
-		CASE(u, X);
-		CASE(h, Y);
-		CASE(o, L);
-		CASE(k, R);
-		CASE(v, START);
-		CASE(c, SELECT);
-		CASE(UP, UP);
-		CASE(DOWN, DOWN);
-		CASE(LEFT, LEFT);
-		CASE(RIGHT, RIGHT);
-		CASE(HOME, MENU);
+		CASE(a, A);
+		CASE(b, B);
+		CASE(x, X);
+		CASE(y, Y);
+		CASE(m, L);
+		CASE(n, R);
+		CASE(s, START);
+		CASE(k, SELECT);
+		CASE(u, UP);
+		CASE(d, DOWN);
+		CASE(l, LEFT);
+		CASE(r, RIGHT);
+		CASE(h, MENU);
 		default: break;
 	}
 
@@ -216,7 +216,7 @@ u32 sal_VideoInit(u32 bpp)
 	mBpp=bpp;
 
 	//Set up the screen
-	mScreen = SDL_SetVideoMode( SAL_SCREEN_WIDTH, SAL_SCREEN_HEIGHT, bpp, SDL_HWSURFACE |
+	mScreen = SDL_SetVideoMode( SAL_SCREEN_WIDTH, SAL_SCREEN_HEIGHT, bpp, SDL_HWSURFACE | SDL_NOFRAME |
 #ifdef SDL_TRIPLEBUF
 		SDL_TRIPLEBUF
 #else
