@@ -1,15 +1,22 @@
 
 # Define the applications properties here:
 
-TARGET = PocketSNES
+TARGET = psnes
 
-CC  := gcc
-CXX := g++
-STRIP := strip
-
+CC  := arm-linux-gnueabihf-gcc
+CXX := arm-linux-gnueabihf-g++
+STRIP := arm-linux-gnueabihf-strip
 SYSROOT := $(shell $(CC) --print-sysroot)
-SDL_CFLAGS := $(shell $(SYSROOT)/usr/bin/sdl-config --cflags)
-SDL_LIBS := $(shell $(SYSROOT)/usr/bin/sdl-config --libs)
+SDL_CFLAGS := $(shell /mnt/c/Users/cinve/Workspace/cross_compilation_funkey/sdl/final/bin/sdl-config --cflags)
+SDL_LIBS := $(shell /mnt/c/Users/cinve/Workspace/cross_compilation_funkey/sdl/final/bin/sdl-config --libs)
+
+
+#CC  := gcc
+#CXX := g++
+#STRIP := strip
+#SYSROOT := $(shell $(CC) --print-sysroot)
+#SDL_CFLAGS := $(shell $(SYSROOT)/usr/bin/sdl-config --cflags)
+#SDL_LIBS := $(shell $(SYSROOT)/usr/bin/sdl-config --libs)
 
 ifdef V
 	CMD:=
@@ -27,12 +34,11 @@ INCLUDE = -I pocketsnes \
 CFLAGS = $(INCLUDE) -DRC_OPTIMIZED -D__LINUX__ -D__DINGUX__ -DNO_ROM_BROWSER \
 		 -DGCW_ZERO \
 		 -g -O3 -pipe -ffast-math $(SDL_CFLAGS) \
-		 -flto -fomit-frame-pointer -fexpensive-optimizations
-#-mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=neon
+		 -flto -fomit-frame-pointer -fexpensive-optimizations -march=armv7-a -mtune=cortex-a7 -mfpu=neon -mfloat-abi=hard -ffast-math -funsafe-math-optimizations -mvectorize-with-neon-quad -ftree-vectorize
 
 CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
 
-LDFLAGS = $(CXXFLAGS) -lpthread -lz -lpng -lm -lgcc $(SDL_LIBS)
+LDFLAGS = $(CXXFLAGS) -lpthread -lz -lpng -lm -lgcc $(SDL_LIBS) -lSDL_ttf -lSDL_image
 
 # Find all source files
 SOURCE = pocketsnes/snes9x menu sal/linux sal
@@ -73,3 +79,4 @@ clean :
 	$(SUM) "  CLEAN   ."
 	$(CMD)rm -f $(OBJS) $(TARGET)
 	$(CMD)rm -rf .opk_data $(TARGET).opk
+

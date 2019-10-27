@@ -33,7 +33,7 @@ static s8 mQuickStateDisplay[16]={""};
 static u32 mFps=0;
 static u32 mLastTimer=0;
 static u32 mEnterMenu=0;
-static u32 mExit=0;
+u32 mExit=0;
 static u32 mLoadRequested=0;
 static u32 mSaveRequested=0;
 static u32 mQuickStateTimer=0;
@@ -174,6 +174,7 @@ bool8_32 S9xDeinitUpdate (int Width, int Height, bool8_32)
 		LastPAL = PAL;
 	}
 
+#if 0
 	switch (mMenuOptions.fullScreen)
 	{
 		case 0: /* No scaling */
@@ -185,8 +186,8 @@ bool8_32 S9xDeinitUpdate (int Width, int Height, bool8_32)
 			/*u8 *dst = (u8*) sal_VideoGetBuffer()
 				+ ((sal_VideoGetWidth() - SNES_WIDTH) / 2) * sizeof(u16)
 				+ ((sal_VideoGetHeight() - h) / 2) * pitch;*/
-			u8 *dst = (u8*) sal_VideoGetBuffer()
-				+ ((sal_VideoGetHeight() - h) / 2) * pitch;
+			u8 *dst = (u8*) sal_VideoGetBuffer() +
+				((sal_VideoGetHeight() - h) / 2) * RES_HW_SCREEN_HORIZONTAL * pitch;
 			for (y = 0; y < h; y++)
 			{
 				//memcpy(dst, src, SNES_WIDTH * sizeof(u16));
@@ -213,7 +214,33 @@ bool8_32 S9xDeinitUpdate (int Width, int Height, bool8_32)
 			}
 			break;
 	}
+#endif
 
+
+
+	/// ---- Copy virtual screen to hardware screen depending on aspect ratio ------
+	u32 h = PAL ? SNES_HEIGHT_EXTENDED : SNES_HEIGHT;
+	u32 y, pitch = sal_VideoGetPitch();
+	u16 *src = (u16*) IntermediateScreen;
+	u16 *dst_virtual = (u16*) sal_VirtualVideoGetBuffer();
+
+	/// This is a simple pixel copy, it honestly looks the best for SNES than any stretching and scaling
+	// since the resolution is already very close from 240x240
+	int off_center_y = ABS(RES_HW_SCREEN_VERTICAL-h)/2*RES_HW_SCREEN_HORIZONTAL; // for centering
+	for (y = 0; y < h; y++){
+		memcpy(dst_virtual + off_center_y + RES_HW_SCREEN_HORIZONTAL*y,
+			src + SNES_WIDTH*y + (SNES_WIDTH-RES_HW_SCREEN_HORIZONTAL)/2,
+			RES_HW_SCREEN_HORIZONTAL * sizeof(u16));
+	}
+
+	/*flip_NNOptimized_AllowOutOfScreen(src, dst_virtual,
+		SNES_WIDTH, h, RES_HW_SCREEN_HORIZONTAL, RES_HW_SCREEN_VERTICAL);**/
+
+	/*flip_Downscale_LeftRightUpDownGaussianFilter_Optimized8(src, dst_virtual,
+		SNES_WIDTH, h, RES_HW_SCREEN_HORIZONTAL, RES_HW_SCREEN_VERTICAL);*/
+
+
+	/// ----- HUD info: FPS -----
 	u32 newTimer;
 	if (mMenuOptions.showFps)
 	{
@@ -230,18 +257,25 @@ bool8_32 S9xDeinitUpdate (int Width, int Height, bool8_32)
 		sal_VideoPrint(0,0,mFpsDisplay,SAL_RGB(31,31,31));
 	}
 
+	/// ----- HUD info: Volume -----
 	if(mVolumeDisplayTimer>0)
 	{
 		sal_VideoDrawRect(100,0,8*8,8,SAL_RGB(0,0,0));
 		sal_VideoPrint(100,0,mVolumeDisplay,SAL_RGB(31,31,31));
 	}
 
+	/// ----- HUD info: Quick state -----
 	if(mQuickStateTimer>0)
 	{
 		sal_VideoDrawRect(200,0,8*8,8,SAL_RGB(0,0,0));
 		sal_VideoPrint(200,0,mQuickStateDisplay,SAL_RGB(31,31,31));
 	}
 
+	/// Now Rotate and Flip onto hw screen
+	u16 *dst = (u16*) sal_VideoGetBuffer();
+	SDL_Copy_Rotate_270((uint16_t *)dst_virtual, (uint16_t *)dst,
+								RES_HW_SCREEN_HORIZONTAL, RES_HW_SCREEN_VERTICAL,
+								RES_HW_SCREEN_HORIZONTAL, RES_HW_SCREEN_VERTICAL);
 	sal_VideoFlip(0);
 }
 
@@ -267,10 +301,10 @@ uint32 S9xReadJoypad (int which1)
 
 	u32 joy = sal_InputPoll();
 	
-	if (((joy & SAL_INPUT_SELECT) && (joy & SAL_INPUT_START))
-	 || (joy & SAL_INPUT_MENU))
+	if (joy & SAL_INPUT_MENU)
 	{
-		mEnterMenu = 1;		
+		//printf("launching menu\n");
+		mEnterMenu = 1;
 		return val;
 	}
 	else if(joy & SAL_INPUT_EXIT){
@@ -490,7 +524,7 @@ int Run(int sound)
 	}
 	sal_AudioResume();
 
-	while(!mEnterMenu)
+	while(!mExit)
   	{
 		//Run SNES for one glorious frame
 		S9xMainLoop ();
@@ -499,6 +533,13 @@ int Run(int sound)
 			sal_AudioGenerate(sal_AudioGetSamplesPerFrame() - SamplesDoneThisFrame);
 		SamplesDoneThisFrame = 0;
 		so.err_counter = 0;
+
+		/// Menu
+		if(mEnterMenu){
+			run_menu_loop();
+			mEnterMenu = 0;
+			sal_force_no_menu_detection();
+		}
   	}
 
 	sal_AudioPause();
@@ -532,6 +573,7 @@ int SnesRomLoad()
 
 	if (!Memory.LoadROM (mRomName))
 	{
+		printf("Rom %s not loaded, check the path\n", mRomName);
 		MenuMessageBox("Loading ROM",mRomName,"Failed!",MENU_MESSAGE_BOX_MODE_PAUSE);
 		return SAL_ERROR;
 	}
@@ -713,7 +755,9 @@ int mainEntry(int argc, char* argv[])
  		strcpy(mRomName, argv[1]); // Record ROM name
 
 	MenuInit(sal_DirectoryGetHome(), &mMenuOptions);
-
+	init_menu_SDL();
+	init_menu_zones();
+	init_menu_system_values();
 
 	if(SnesInit() == SAL_ERROR)
 	{
@@ -736,10 +780,11 @@ int mainEntry(int argc, char* argv[])
 			}
 			if(SnesRomLoad() == SAL_ERROR)
 			{
+				//MenuMessageBox("Failed to load ROM",mRomName,"Press any button to continue", MENU_MESSAGE_BOX_MODE_PAUSE);
+				printf("Failed to load ROM %s\n",mRomName);
 				mRomName[0] = 0;
-				MenuMessageBox("Failed to load ROM",mRomName,"Press any button to continue", MENU_MESSAGE_BOX_MODE_PAUSE);
 				sal_Reset();
-		    		return 0;
+			return 0;
 			}
 			else
 			{
@@ -782,6 +827,7 @@ int mainEntry(int argc, char* argv[])
 	GFX.ZBuffer=NULL;
 	GFX.SubScreen=NULL;
 
+	deinit_menu_SDL();
 	sal_Reset();
   	return 0;
 }

@@ -74,7 +74,7 @@ void sal_VideoBitmapScale(int startx, int starty, int viswidth, int visheight, i
 
 static void sal_VideoDrawRect8(s32 x, s32 y, s32 width, s32 height, u8 color)
 {
-	u8 *pixy = (u8*)sal_VideoGetBuffer();
+	u8 *pixy = (u8*)sal_VirtualVideoGetBuffer();
 	u8 *pixx;
 	s32 h,w;
 	pixy = pixy + y * sal_VideoGetPitch() + x;
@@ -91,7 +91,7 @@ static void sal_VideoDrawRect8(s32 x, s32 y, s32 width, s32 height, u8 color)
 
 static void sal_VideoDrawRect16(s32 x, s32 y, s32 width, s32 height, u16 color)
 {
-	u16 *pixy = (u16*)sal_VideoGetBuffer();
+	u16 *pixy = (u16*)sal_VirtualVideoGetBuffer();
 	u16 *pixx;
 	s32 h,w;
 	pixy = ((u16*) ((u8*) pixy + y * sal_VideoGetPitch())) + x;
@@ -115,7 +115,7 @@ void sal_VideoDrawRect(s32 x, s32 y, s32 width, s32 height, u32 color)
 static void sal_VideoPrint8(s32 x, s32 y, const char *buffer, u8 color)
 {
 	s32 m,b;
-	u8 *pix = (u8*)sal_VideoGetBuffer();
+	u8 *pix = (u8*)sal_VirtualVideoGetBuffer();
 	s32 len=0;
 	s32 maxLen=(sal_VideoGetWidth()>>3)-(x>>3);
 
@@ -163,7 +163,7 @@ static void sal_VideoPrint8(s32 x, s32 y, const char *buffer, u8 color)
 static void sal_VideoPrint16(s32 x, s32 y, const char *buffer, u16 color)
 {
 	s32 m,b;
-	u16 *pix = (u16*)sal_VideoGetBuffer();
+	u16 *pix = (u16*)sal_VirtualVideoGetBuffer();
 	s32 len=0;
 	s32 maxLen=(sal_VideoGetWidth()>>3)-(x>>3);
 
@@ -217,7 +217,7 @@ static
 void sal_VideoClear16(u16 color)
 {
 	s32 x,y,w,h,pitch;
-	u16 *pix=(u16*)sal_VideoGetBuffer();
+	u16 *pix=(u16*)sal_VirtualVideoGetBuffer();
 
 	w = sal_VideoGetWidth();
 	h = sal_VideoGetHeight();
@@ -237,7 +237,7 @@ static
 void sal_VideoClear8(u8 color)
 {
 	s32 x,y,w,h,pitch;
-	u8 *pix=(u8*)sal_VideoGetBuffer();
+	u8 *pix=(u8*)sal_VirtualVideoGetBuffer();
 
 	w = sal_VideoGetWidth();
 	h = sal_VideoGetHeight();
@@ -747,7 +747,7 @@ s32 sal_ImageDrawTiled(u16 *image, u32 width, u32 height, s32 xScroll, s32 yScro
 {	
 	s16 x2=0, x3=0;
 	s16 y2=0, y3=0;
-	u16 *fbStart = (u16*)sal_VideoGetBuffer();
+	u16 *fbStart = (u16*)sal_VirtualVideoGetBuffer();
 	u16 *fb;
 	fbStart = (u16*) ((u8*) fbStart + (y * sal_VideoGetPitch())) + x;
 	u16 *graphics1 = (u16 *)NULL;
@@ -775,7 +775,7 @@ s32 sal_ImageDrawTiled(u16 *image, u32 width, u32 height, s32 xScroll, s32 yScro
 
 s32 sal_ImageDraw(u16 *image, u32 width, u32 height, s32 x, s32 y)
 {	
-	u16 *fbStart = (u16*)sal_VideoGetBuffer();
+	u16 *fbStart = (u16*)sal_VirtualVideoGetBuffer();
 	u16 *fb;
 	u16 *graphics = (u16*)image;
 	u32 x2,y2;
@@ -796,7 +796,7 @@ s32 sal_ImageDraw(u16 *image, u32 width, u32 height, s32 x, s32 y)
 
 s32 sal_HighlightBar(s32 width, s32 height, s32 x, s32 y)
 {
-	u16 *fbStart = (u16*)sal_VideoGetBuffer();
+	u16 *fbStart = (u16*)sal_VirtualVideoGetBuffer();
 	u16 *blitStart = (u16*) ((u8*) fbStart + y * sal_VideoGetPitch()) + x;
 
 	//vertical stride

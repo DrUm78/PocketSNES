@@ -12,6 +12,10 @@
 #define SAL_TRUE					1
 #define SAL_FALSE					0
 
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#define ABS(x) (((x) < 0) ? (-x) : (x))
+
 typedef uint32_t u32;
 typedef int32_t  s32;
 typedef uint16_t u16;
@@ -23,6 +27,7 @@ extern u32 mInputRepeat;
 extern u32 mInputRepeatTimer[32];
 extern u32 mBpp;
 extern u32 mRefreshRate;
+extern u32 mExit;
 
 enum  SAL_FILE_TYPE_ENUM
 {
@@ -64,6 +69,7 @@ void sal_VideoExitGame();
 u32 sal_VideoGetPitch();
 void sal_VideoFlip(s32 vsync);
 void *sal_VideoGetBuffer();
+void *sal_VirtualVideoGetBuffer();
 void sal_VideoPaletteSet(u32 index, u32 color);
 void sal_VideoPaletteSync();
 void sal_VideoBitmapScale(int startx, int starty, int viswidth, int visheight, int newwidth, int newheight,int pitch, u16 *src, u16 *dst);
@@ -106,6 +112,7 @@ void sal_InputWaitForPress();
 void sal_InputIgnore();
 u32 sal_InputPoll();
 u32 sal_InputPollRepeat();
+void sal_force_no_menu_detection();
 
 void sal_Sleep(u32 milliSecs);
 
@@ -141,5 +148,15 @@ s32 sal_ImageLoad(const char *fname, void *dest, u32 width, u32 height);
 s32 sal_ImageDrawTiled(u16 *image, u32 width, u32 height, s32 xScroll, s32 yScroll, s32 x, s32 y);
 s32 sal_ImageDraw(u16 *image, u32 width, u32 height, s32 x, s32 y);
 s32 sal_HighlightBar(s32 width, s32 height, s32 x, s32 y);
+
+void flip_NNOptimized_AllowOutOfScreen(uint16_t *src_screen, uint16_t *dst_screen,
+								int src_w, int src_h, int dst_w, int dst_h);
+void flip_Upscaling_Bilinear(uint16_t *src_screen, uint16_t *dst_screen,
+								int src_w, int src_h, int dst_w, int dst_h);
+void flip_Downscale_LeftRightUpDownGaussianFilter_Optimized8(uint16_t *src_screen, uint16_t *dst_screen,
+								int src_w, int src_h, int dst_w, int dst_h);
+void SDL_Copy_Rotate_270(uint16_t *src_screen, uint16_t *dst_screen,
+								int src_w, int src_h, int dst_w, int dst_h);
+void clear_screen(uint16_t *screen_pixels, int w, int h, uint16_t color);
 
 #endif /* __SAL_COMMON_H__ */
