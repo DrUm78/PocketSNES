@@ -24,7 +24,7 @@
 static struct MENU_OPTIONS mMenuOptions;
 static int mEmuScreenHeight;
 static int mEmuScreenWidth;
-static char mRomName[SAL_MAX_PATH]={""};
+char mRomName[SAL_MAX_PATH]={""};
 static u32 mLastRate=0;
 
 static s8 mFpsDisplay[16]={""};
@@ -226,18 +226,21 @@ bool8_32 S9xDeinitUpdate (int Width, int Height, bool8_32)
 
 	/// This is a simple pixel copy, it honestly looks the best for SNES than any stretching and scaling
 	// since the resolution is already very close from 240x240
-	int off_center_y = ABS(RES_HW_SCREEN_VERTICAL-h)/2*RES_HW_SCREEN_HORIZONTAL; // for centering
+	/*int off_center_y = ABS(RES_HW_SCREEN_VERTICAL-h)/2*RES_HW_SCREEN_HORIZONTAL; // for centering
 	for (y = 0; y < h; y++){
 		memcpy(dst_virtual + off_center_y + RES_HW_SCREEN_HORIZONTAL*y,
 			src + SNES_WIDTH*y + (SNES_WIDTH-RES_HW_SCREEN_HORIZONTAL)/2,
 			RES_HW_SCREEN_HORIZONTAL * sizeof(u16));
-	}
+	}*/
 
 	/*flip_NNOptimized_AllowOutOfScreen(src, dst_virtual,
-		SNES_WIDTH, h, RES_HW_SCREEN_HORIZONTAL, RES_HW_SCREEN_VERTICAL);**/
+		Width, h, Width, RES_HW_SCREEN_VERTICAL);*/
 
-	/*flip_Downscale_LeftRightUpDownGaussianFilter_Optimized8(src, dst_virtual,
-		SNES_WIDTH, h, RES_HW_SCREEN_HORIZONTAL, RES_HW_SCREEN_VERTICAL);*/
+	flip_Downscale_LeftRightUpDownGaussianFilter_Optimized4(src, dst_virtual,
+		Width, h, RES_HW_SCREEN_HORIZONTAL, RES_HW_SCREEN_VERTICAL);
+
+	/*flip_Downscale_LeftRightUpDownGaussianFilter_Optimized8(src, dst_virtual, 
+		Width, h, RES_HW_SCREEN_HORIZONTAL, RES_HW_SCREEN_VERTICAL);*/
 
 
 	/// ----- HUD info: FPS -----
@@ -272,10 +275,7 @@ bool8_32 S9xDeinitUpdate (int Width, int Height, bool8_32)
 	}
 
 	/// Now Rotate and Flip onto hw screen
-	u16 *dst = (u16*) sal_VideoGetBuffer();
-	SDL_Copy_Rotate_270((uint16_t *)dst_virtual, (uint16_t *)dst,
-								RES_HW_SCREEN_HORIZONTAL, RES_HW_SCREEN_VERTICAL,
-								RES_HW_SCREEN_HORIZONTAL, RES_HW_SCREEN_VERTICAL);
+	SDL_Rotate_270_StandardSurfaces();
 	sal_VideoFlip(0);
 }
 
@@ -443,12 +443,14 @@ void S9xSaveSRAM (int showWarning)
 	{
 		if(!Memory.SaveSRAM ((s8*)S9xGetFilename (".srm")))
 		{
-			MenuMessageBox("Saving SRAM","Failed!","",MENU_MESSAGE_BOX_MODE_PAUSE);
+			//MenuMessageBox("Saving SRAM","Failed!","",MENU_MESSAGE_BOX_MODE_PAUSE);
+			printf("Saving SRAM, Failed!\n");
 		}
 	}
 	else if(showWarning)
 	{
-		MenuMessageBox("SRAM saving ignored","No changes have been made to SRAM","",MENU_MESSAGE_BOX_MODE_MSG);
+		//MenuMessageBox("SRAM saving ignored","No changes have been made to SRAM","",MENU_MESSAGE_BOX_MODE_MSG);
+		printf("SRAM saving ignored, No changes have been made to SRAM\n");
 	}
 }
 
@@ -754,22 +756,24 @@ int mainEntry(int argc, char* argv[])
 	if (argc >= 2)
  		strcpy(mRomName, argv[1]); // Record ROM name
 
-	MenuInit(sal_DirectoryGetHome(), &mMenuOptions);
+	MenuInit(sal_DirectoryGetHome(), &mMenuOptions, mRomName);
 	init_menu_SDL();
 	init_menu_zones();
 	init_menu_system_values();
 
 	if(SnesInit() == SAL_ERROR)
 	{
+		printf("SnesInit() == SAL_ERROR\n");
 		sal_Reset();
 		return 0;
 	}
 
 	while(!mExit)
 	{
-		mInMenu=1;
+		/*mInMenu=1;
 		event=MenuRun(mRomName);
-		mInMenu=0;
+		mInMenu=0;*/
+		event=EVENT_LOAD_ROM;
 
 		if(event==EVENT_LOAD_ROM)
 		{

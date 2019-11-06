@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <SDL.h>
 
 #define SAL_OK						1
 #define SAL_ERROR					0
@@ -153,10 +154,15 @@ void flip_NNOptimized_AllowOutOfScreen(uint16_t *src_screen, uint16_t *dst_scree
 								int src_w, int src_h, int dst_w, int dst_h);
 void flip_Upscaling_Bilinear(uint16_t *src_screen, uint16_t *dst_screen,
 								int src_w, int src_h, int dst_w, int dst_h);
+void flip_Downscale_LeftRightUpDownGaussianFilter_Optimized4(uint16_t *src_screen, uint16_t *dst_screen,
+								int src_w, int src_h, int dst_w, int dst_h);
 void flip_Downscale_LeftRightUpDownGaussianFilter_Optimized8(uint16_t *src_screen, uint16_t *dst_screen,
 								int src_w, int src_h, int dst_w, int dst_h);
-void SDL_Copy_Rotate_270(uint16_t *src_screen, uint16_t *dst_screen,
-								int src_w, int src_h, int dst_w, int dst_h);
+/*void SDL_Copy_Rotate_270(uint16_t *src_screen, uint16_t *dst_screen,
+								int src_w, int src_h, int dst_w, int dst_h);*/
+void SDL_Rotate_270(SDL_Surface * src_surface, SDL_Surface * dst_surface);
+void SDL_Rotate_270_StandardSurfaces();
 void clear_screen(uint16_t *screen_pixels, int w, int h, uint16_t color);
+void sal_VideoRotateAndFlip(uint32_t fps);
 
 #endif /* __SAL_COMMON_H__ */

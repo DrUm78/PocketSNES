@@ -82,6 +82,7 @@ static s8 mRomDir[SAL_MAX_PATH]={""};
 static struct SAVE_STATE mSaveState[10];  // holds the filenames for the savestate and "inuse" flags
 static s8 mSaveStateName[SAL_MAX_PATH]={""};       // holds the last filename to be scanned for save states
 static s8 mRomName[SAL_MAX_PATH]={""};
+//extern char mRomName[SAL_MAX_PATH];
 static s8 mSystemDir[SAL_MAX_PATH];
 static struct MENU_OPTIONS *mMenuOptions=NULL;
 static u16 mTempFb[SNES_WIDTH*SNES_HEIGHT_EXTENDED];
@@ -127,7 +128,13 @@ int aspect_ratio_factor_step = 10;
 int savestate_slot = 0;
 extern u32 mExit;
 
-/// -------------- STATIC FUNCTIONS DECLARATION --------------
+/// -------------- FUNCTIONS DECLARATION --------------
+extern "C" void S9xSaveSRAM(int showWarning);
+static void ScanSaveStates(s8 *romname);
+static void SaveStateTemp();
+static void DeleteStateTemp();
+static bool8 LoadStateFile(s8 *filename);
+static bool8 SaveStateFile(s8 *filename);
 
 /// -------------- FUNCTIONS IMPLEMENTATION --------------
 void init_menu_SDL(){
@@ -342,9 +349,9 @@ void init_menu_zones(){
     /// Init Brightness Menu
     add_menu_zone(MENU_TYPE_BRIGHTNESS);
     /// Init Save Menu
-    //add_menu_zone(MENU_TYPE_SAVE);
+    add_menu_zone(MENU_TYPE_SAVE);
     /// Init Load Menu
-    //add_menu_zone(MENU_TYPE_LOAD);
+    add_menu_zone(MENU_TYPE_LOAD);
     /// Init Aspect Ratio Menu
     //add_menu_zone(MENU_TYPE_ASPECT_RATIO);
     /// Init Exit Menu
@@ -472,22 +479,15 @@ void menu_screen_refresh(int menuItem, int prevItem, int scroll, uint8_t menu_co
                     text_surface = TTF_RenderText_Blended(menu_info_font, text_tmp, text_color);
                 }
                 else{
-                    /*/// ---- Write current Save state ----
-                    get_savestate_filename(savestate_slot, fname);
-                    file_open(savestate_file, fname, read);
-                    if(file_check_valid(savestate_file))
+                    /// ---- Write current Save state ----
+                    if(mSaveState[savestate_slot].inUse)
                     {
-                        file_close(savestate_file);
                         printf("Found Save slot: %s\n", fname);
-                        char *p = strrchr (fname, '/');
-                        char *basename = p ? p + 1 : (char *) fname;
-                        char file_name_short[24];
-                        snprintf(file_name_short, 24, "%s", basename);
-                        text_surface = TTF_RenderText_Blended(menu_small_info_font, file_name_short, text_color);
+                        text_surface = TTF_RenderText_Blended(menu_small_info_font, mSaveState[savestate_slot].filename, text_color);
                     }
                     else{
                         text_surface = TTF_RenderText_Blended(menu_info_font, "Free", text_color);
-                    }*/
+                    }
                 }
             }
             text_pos.x = (draw_screen->w - MENU_ZONE_WIDTH)/2 + (MENU_ZONE_WIDTH - text_surface->w)/2;
@@ -513,22 +513,15 @@ void menu_screen_refresh(int menuItem, int prevItem, int scroll, uint8_t menu_co
                     text_surface = TTF_RenderText_Blended(menu_info_font, text_tmp, text_color);
                 }
                 else{
-                    /*/// ---- Write current Load state ----
-                    get_savestate_filename(savestate_slot, fname);
-                    file_open(savestate_file, fname, read);
-                    if(file_check_valid(savestate_file))
+                    /// ---- Get current Load state ----
+                    if(mSaveState[savestate_slot].inUse)
                     {
-                        file_close(savestate_file);
                         printf("Found Load slot: %s\n", fname);
-                        char *p = strrchr (fname, '/');
-                        char *basename = p ? p + 1 : (char *) fname;
-                        char file_name_short[24];
-                        snprintf(file_name_short, 24, "%s", basename);
-                        text_surface = TTF_RenderText_Blended(menu_small_info_font, file_name_short, text_color);
+                        text_surface = TTF_RenderText_Blended(menu_small_info_font, mSaveState[savestate_slot].filename, text_color);
                     }
                     else{
                         text_surface = TTF_RenderText_Blended(menu_info_font, "Free", text_color);
-                    }*/
+                    }
                 }
             }
             text_pos.x = (draw_screen->w - MENU_ZONE_WIDTH)/2 + (MENU_ZONE_WIDTH - text_surface->w)/2;
@@ -564,9 +557,7 @@ void menu_screen_refresh(int menuItem, int prevItem, int scroll, uint8_t menu_co
     }
 
     /// --------- Screen Rotate --------
-    SDL_Copy_Rotate_270((uint16_t *)draw_screen->pixels, (uint16_t *)hw_screen->pixels,
-								RES_HW_SCREEN_HORIZONTAL, RES_HW_SCREEN_VERTICAL,
-								RES_HW_SCREEN_HORIZONTAL, RES_HW_SCREEN_VERTICAL);
+    SDL_Rotate_270(draw_screen, hw_screen);
     /*SDL_BlitSurface(draw_screen, NULL, virtual_hw_screen, NULL);*/
 
     /// --------- Flip Screen ----------
@@ -780,13 +771,11 @@ void run_menu_loop()
                                 menu_screen_refresh(menuItem, prevItem, scroll, menu_confirmation, 1);
 
                                 /// ------ Save game ------
-                                /*u16 *current_screen = copy_screen();
-                                get_savestate_filename_noshot(savestate_slot, fname);
-                                save_state(fname, current_screen);
+                                if(SaveStateFile(mSaveState[savestate_slot].fullFilename)){
+                                    mSaveState[savestate_slot].inUse=1;
+                                }
 
                                 /// ----- Hud Msg -----
-                                sprintf(hud_msg, "SAVED IN SLOT %d", savestate_slot);
-                                set_hud_msg(hud_msg, 4);*/
 
                                 stop_menu_loop = 1;
                             }
@@ -804,12 +793,9 @@ void run_menu_loop()
                                 menu_screen_refresh(menuItem, prevItem, scroll, menu_confirmation, 1);
 
                                 /// ------ Load game ------
-                                /*get_savestate_filename_noshot(savestate_slot, fname);
-                                load_state(fname);
+                                LoadStateFile(mSaveState[savestate_slot].fullFilename);
 
                                 /// ----- Hud Msg -----
-                                sprintf(hud_msg, "LOADED FROM SLOT %d", savestate_slot);
-                                set_hud_msg(hud_msg, 4);*/
 
                                 stop_menu_loop = 1;
                             }
@@ -865,17 +851,17 @@ void run_menu_loop()
         }
 
         /// --------- Handle Scroll effect ---------
-        if (scroll>0){
-            scroll+=SCROLL_SPEED_PX;
-            screen_refresh = 1;
-        }
-        if (scroll<0){
-            scroll-=SCROLL_SPEED_PX;
-            screen_refresh = 1;
-        }
         if (scroll>MENU_ZONE_HEIGHT || scroll<-MENU_ZONE_HEIGHT) {
             prevItem=menuItem;
             scroll=0;
+            screen_refresh = 1;
+        }
+        else if (scroll>0){
+            scroll+=SCROLL_SPEED_PX;
+            screen_refresh = 1;
+        }
+        else if (scroll<0){
+            scroll-=SCROLL_SPEED_PX;
             screen_refresh = 1;
         }
 
@@ -1670,7 +1656,10 @@ static void ScanSaveStates(s8 *romname)
 	s8 ext[SAL_MAX_PATH];
 	s8 path[SAL_MAX_PATH];
 
-	if(!strcmp(romname,mSaveStateName)) return; // is current save state rom so exit
+	if(!strcmp(romname,mSaveStateName)){
+        printf("In ScanSaveStates, is current save state rom so exit, %s\n", romname);
+        return; // is current save state rom so exit
+    }
 	
 	sal_DirectorySplitFilename(romname,path,filename,ext);
 
@@ -1686,6 +1675,8 @@ static void ScanSaveStates(s8 *romname)
 		*/
 		sprintf(mSaveState[i].filename,"%s%d",savename,i);
 		sprintf(mSaveState[i].fullFilename,"%s%s%s",mSystemDir,SAL_DIR_SEP,mSaveState[i].filename);
+        printf("In ScanSaveStates, mSaveState[%d].filename = %s\n", i, mSaveState[i].filename);
+        printf("In ScanSaveStates, mSaveState[%d].fullFilename = %s\n", i, mSaveState[i].fullFilename);
 		if (sal_FileExists(mSaveState[i].fullFilename)==SAL_TRUE)
 		{
 			// we have a savestate
@@ -1738,10 +1729,12 @@ bool8 LoadStateFile(s8 *filename)
 }
 
 static
-void SaveStateFile(s8 *filename)
+bool8 SaveStateFile(s8 *filename)
 {
-	if (!S9xFreezeGame(filename))
+    bool8 ret;
+	if (!(ret = S9xFreezeGame(filename)))
 		fprintf(stderr, "Failed to write saved state at %s: %s\n", filename, strerror(errno));
+    return ret;
 }
 
 u32 IsPreviewingState()
@@ -2310,7 +2303,7 @@ void MenuReloadOptions()
 	DefaultMenuOptions();
 }
 
-void MenuInit(const char *systemDir, struct MENU_OPTIONS *menuOptions)
+void MenuInit(const char *systemDir, struct MENU_OPTIONS *menuOptions, char *romName)
 {
 	s8 filename[SAL_MAX_PATH];
 	u16 *pix;
@@ -2330,11 +2323,14 @@ void MenuInit(const char *systemDir, struct MENU_OPTIONS *menuOptions)
 	sal_ImageLoad("pocketsnes_bg.png", &mMenuBackground, SAL_SCREEN_WIDTH, SAL_SCREEN_HEIGHT);
 
 	MenuReloadOptions();
+
+    /// ------ Load save states -------
+    strcpy(mRomName, romName);
+    ScanSaveStates(mRomName);
 }
 
 
 
-extern "C" void S9xSaveSRAM(int showWarning);
 
 s32 MenuRun(s8 *romName)
 {
