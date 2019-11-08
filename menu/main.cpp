@@ -90,9 +90,9 @@ void S9xSetPalette ()
 void S9xExtraUsage ()
 {
 }
-	
+
 void S9xParseArg (char **argv, int &index, int argc)
-{	
+{
 }
 
 bool8 S9xOpenSnapshotFile (const char *fname, bool8 read_only, STREAM *file)
@@ -108,14 +108,14 @@ bool8 S9xOpenSnapshotFile (const char *fname, bool8 read_only, STREAM *file)
 			return(TRUE);
 	}
 
-	return (FALSE);	
+	return (FALSE);
 }
 
 const char* S9xGetSnapshotDirectory (void)
 {
 	return sal_DirectoryGetHome();
 }
-	
+
 void S9xCloseSnapshotFile (STREAM file)
 {
 	CLOSE_STREAM(file);
@@ -239,7 +239,7 @@ bool8_32 S9xDeinitUpdate (int Width, int Height, bool8_32)
 	flip_Downscale_LeftRightUpDownGaussianFilter_Optimized4(src, dst_virtual,
 		Width, h, RES_HW_SCREEN_HORIZONTAL, RES_HW_SCREEN_VERTICAL);
 
-	/*flip_Downscale_LeftRightUpDownGaussianFilter_Optimized8(src, dst_virtual, 
+	/*flip_Downscale_LeftRightUpDownGaussianFilter_Optimized8(src, dst_virtual,
 		Width, h, RES_HW_SCREEN_HORIZONTAL, RES_HW_SCREEN_VERTICAL);*/
 
 
@@ -255,7 +255,7 @@ bool8_32 S9xDeinitUpdate (int Width, int Height, bool8_32)
 			sprintf(mFpsDisplay,"%2d/%2d", mFps, Memory.ROMFramesPerSecond);
 			mFps=0;
 		}
-		
+
 		sal_VideoDrawRect(0,0,5*8,8,SAL_RGB(0,0,0));
 		sal_VideoPrint(0,0,mFpsDisplay,SAL_RGB(31,31,31));
 	}
@@ -300,7 +300,7 @@ uint32 S9xReadJoypad (int which1)
 	if (which1 != 0) return val;
 
 	u32 joy = sal_InputPoll();
-	
+
 	if (joy & SAL_INPUT_MENU)
 	{
 		//printf("launching menu\n");
@@ -347,7 +347,7 @@ uint32 S9xReadJoypad (int which1)
 	if (joy & SAL_INPUT_A) val |= SNES_A_MASK;
 	if (joy & SAL_INPUT_B) val |= SNES_B_MASK;
 	if (joy & SAL_INPUT_X) val |= SNES_X_MASK;
-		
+
 	if (joy & SAL_INPUT_UP) 	val |= SNES_UP_MASK;
 	if (joy & SAL_INPUT_DOWN) 	val |= SNES_DOWN_MASK;
 	if (joy & SAL_INPUT_LEFT) 	val |= SNES_LEFT_MASK;
@@ -491,6 +491,9 @@ int Run(int sound)
 	LastPAL = PAL;
 
 	Settings.SoundSync = mMenuOptions.soundSync;
+
+	//Forcing no Frameskip
+	mMenuOptions.frameSkip = 0;
 	Settings.SkipFrames = mMenuOptions.frameSkip == 0 ? AUTO_FRAMERATE : mMenuOptions.frameSkip - 1;
 	sal_TimerInit(Settings.FrameTime);
 
@@ -579,7 +582,7 @@ int SnesRomLoad()
 		MenuMessageBox("Loading ROM",mRomName,"Failed!",MENU_MESSAGE_BOX_MODE_PAUSE);
 		return SAL_ERROR;
 	}
-	
+
 	MenuMessageBox("Done loading the ROM",mRomName,"",MENU_MESSAGE_BOX_MODE_MSG);
 
 	S9xReset();
@@ -615,13 +618,13 @@ int SnesInit()
 
 	Settings.InterpolatedSound = TRUE;
 	Settings.StarfoxHack = TRUE;
-	
+
 	Settings.ForceTransparency = FALSE;
 	Settings.Transparency = TRUE;
 #ifndef FOREVER_16_BIT
 	Settings.SixteenBit = TRUE;
 #endif
-	
+
 	Settings.SupportHiRes = FALSE;
 	Settings.NetPlay = FALSE;
 	Settings.ServerName [0] = 0;
@@ -632,7 +635,7 @@ int SnesInit()
 	Settings.ThreadSound = FALSE;
 	Settings.SoundSync = 1;
 	Settings.FixFrequency = TRUE;
-	//Settings.NoPatch = true;		
+	//Settings.NoPatch = true;
 
 	Settings.SuperFX = TRUE;
 	Settings.DSP1Master = TRUE;
@@ -642,7 +645,7 @@ int SnesInit()
 
 	GFX.Screen = (uint8*) IntermediateScreen;
 	GFX.RealPitch = GFX.Pitch = 256 * sizeof(u16);
-	
+
 	GFX.SubScreen = (uint8 *)malloc(GFX.RealPitch * 480 * 2);
 	GFX.ZBuffer =  (uint8 *)malloc(GFX.RealPitch * 480 * 2);
 	GFX.SubZBuffer = (uint8 *)malloc(GFX.RealPitch * 480 * 2);
@@ -650,7 +653,7 @@ int SnesInit()
 	GFX.PPL = GFX.Pitch >> 1;
 	GFX.PPLx2 = GFX.Pitch;
 	GFX.ZPitch = GFX.Pitch >> 1;
-	
+
 	if (Settings.ForceNoTransparency)
          Settings.Transparency = FALSE;
 
@@ -668,7 +671,7 @@ int SnesInit()
 	}
 
 	//S9xInitSound ();
-	
+
 	//S9xSetRenderPixelFormat (RGB565);
 	S9xSetSoundMute (TRUE);
 
@@ -805,21 +808,21 @@ int mainEntry(int argc, char* argv[])
 		if(event==EVENT_RUN_ROM)
 		{
 			sal_AudioSetVolume(mMenuOptions.volume,mMenuOptions.volume);
-			sal_CpuSpeedSet(mMenuOptions.cpuSpeed);	
+			sal_CpuSpeedSet(mMenuOptions.cpuSpeed);
 			mFramesCleared = 0;
-			if(mMenuOptions.soundEnabled) 	
+			if(mMenuOptions.soundEnabled)
 				RunSound();
 			else	RunNoSound();
 
 			event=EVENT_NONE;
 		}
 
-		if(event==EVENT_EXIT_APP) break;	
+		if(event==EVENT_EXIT_APP) break;
 	}
 
 	MenuMessageBox("Saving SRAM...","","",MENU_MESSAGE_BOX_MODE_MSG);
 	PSNESForceSaveSRAM();
-	
+
 	S9xGraphicsDeinit();
 	S9xDeinitAPU();
 	Memory.Deinit();

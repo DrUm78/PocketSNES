@@ -448,6 +448,7 @@ void menu_screen_refresh(int menuItem, int prevItem, int scroll, uint8_t menu_co
         char text_tmp[40];
         SDL_Rect text_pos;
         char fname[MAXPATHLEN];
+        uint16_t limit_filename_size = 20;
         memset(fname, 0, MAXPATHLEN);
 
         switch(idx_menus[menuItem]){
@@ -483,7 +484,9 @@ void menu_screen_refresh(int menuItem, int prevItem, int scroll, uint8_t menu_co
                     if(mSaveState[savestate_slot].inUse)
                     {
                         printf("Found Save slot: %s\n", fname);
-                        text_surface = TTF_RenderText_Blended(menu_small_info_font, mSaveState[savestate_slot].filename, text_color);
+                        strcpy(fname, mSaveState[savestate_slot].filename);
+                        if(strlen(fname) > limit_filename_size){fname[limit_filename_size]=0;} //limiting size
+                        text_surface = TTF_RenderText_Blended(menu_small_info_font,fname, text_color);
                     }
                     else{
                         text_surface = TTF_RenderText_Blended(menu_info_font, "Free", text_color);
@@ -517,7 +520,9 @@ void menu_screen_refresh(int menuItem, int prevItem, int scroll, uint8_t menu_co
                     if(mSaveState[savestate_slot].inUse)
                     {
                         printf("Found Load slot: %s\n", fname);
-                        text_surface = TTF_RenderText_Blended(menu_small_info_font, mSaveState[savestate_slot].filename, text_color);
+                        strcpy(fname, mSaveState[savestate_slot].filename);
+                        if(strlen(fname) > limit_filename_size){fname[limit_filename_size]=0;} //limiting size
+                        text_surface = TTF_RenderText_Blended(menu_small_info_font,fname, text_color);
                     }
                     else{
                         text_surface = TTF_RenderText_Blended(menu_info_font, "Free", text_color);
