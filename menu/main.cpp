@@ -387,6 +387,10 @@ void S9xSyncSpeed(void)
 	if (IsPreviewingState())
 		return;
 
+	// Bypass
+	//Settings.SkipFrames = 0;
+	Settings.SkipFrames = AUTO_FRAMERATE;
+
 	if (Settings.SkipFrames == AUTO_FRAMERATE)
 	{
 		if (sal_AudioGetFramesBuffered() < sal_AudioGetMinFrames()
