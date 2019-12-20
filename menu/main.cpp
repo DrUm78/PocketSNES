@@ -277,7 +277,7 @@ bool8_32 S9xDeinitUpdate (int Width, int Height, bool8_32)
 	}
 
 	/// Now Rotate and Flip onto hw screen
-	//SDL_Rotate_270_StandardSurfaces();
+	SDL_Rotate_270_StandardSurfaces();
 
 	sal_VideoFlip(0);
 }

@@ -455,10 +455,12 @@ void SDL_Rotate_270(SDL_Surface * src_surface, SDL_Surface * dst_surface){
 }
 
 void SDL_Rotate_270_StandardSurfaces(){
-	SDL_Rotate_270(virtual_hw_screen, hw_screen);
+	//SDL_Rotate_270(virtual_hw_screen, hw_screen);
 
 	//SDL_BlitSurface(virtual_hw_screen, NULL, hw_screen, NULL);
 	//clear_screen((uint16_t*) hw_screen->pixels, 240, 240, 0);
+
+	memcpy(hw_screen->pixels, virtual_hw_screen->pixels, hw_screen->w*hw_screen->h*sizeof(uint16_t));
 
 #if 0
 	if (SDL_MUSTLOCK(hw_screen)) {
@@ -499,11 +501,9 @@ void sal_VideoFlip(s32 vsync)
 {
 	if (SDL_MUSTLOCK(hw_screen)) {
 		SDL_UnlockSurface(hw_screen);
-		SDL_BlitSurface(virtual_hw_screen, NULL, hw_screen, NULL);
 		SDL_Flip(hw_screen);
 		SDL_LockSurface(hw_screen);
 	} else{
-		SDL_BlitSurface(virtual_hw_screen, NULL, hw_screen, NULL);
 		SDL_Flip(hw_screen);
 	}
 
