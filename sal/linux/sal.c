@@ -18,7 +18,7 @@
 #include <assert.h>
 
 #define PALETTE_BUFFER_LENGTH	256*2*4
-#define BLACKER_BLACKS
+//#define BLACKER_BLACKS
 
 SDL_Surface *hw_screen = NULL;
 SDL_Surface *virtual_hw_screen = NULL;
@@ -499,9 +499,11 @@ void sal_VideoFlip(s32 vsync)
 {
 	if (SDL_MUSTLOCK(hw_screen)) {
 		SDL_UnlockSurface(hw_screen);
+		SDL_BlitSurface(virtual_hw_screen, NULL, hw_screen, NULL);
 		SDL_Flip(hw_screen);
 		SDL_LockSurface(hw_screen);
 	} else{
+		SDL_BlitSurface(virtual_hw_screen, NULL, hw_screen, NULL);
 		SDL_Flip(hw_screen);
 	}
 
@@ -517,7 +519,7 @@ void sal_VideoFlip(s32 vsync)
 
 
 
-void sal_VideoRotateAndFlip(uint32_t fps){
+/*void sal_VideoRotateAndFlip(uint32_t fps){
 	if (!fps) fps=25;
 
 	static int prev_time = 0;
@@ -528,7 +530,7 @@ void sal_VideoRotateAndFlip(uint32_t fps){
 
 	SDL_Rotate_270(virtual_hw_screen, hw_screen);
 	sal_VideoFlip(0);
-}
+}*/
 
 void *sal_VideoGetBuffer()
 {

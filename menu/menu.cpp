@@ -565,8 +565,8 @@ void menu_screen_refresh(int menuItem, int prevItem, int scroll, uint8_t menu_co
     }
 
     /// --------- Screen Rotate --------
-    SDL_Rotate_270(draw_screen, hw_screen);
-    /*SDL_BlitSurface(draw_screen, NULL, virtual_hw_screen, NULL);*/
+    //SDL_Rotate_270(draw_screen, hw_screen);
+    SDL_BlitSurface(draw_screen, NULL, hw_screen, NULL);
 
     /// --------- Flip Screen ----------
     SDL_Flip(hw_screen);

@@ -244,6 +244,8 @@ bool8_32 S9xDeinitUpdate (int Width, int Height, bool8_32)
 
 
 	/// ----- HUD info: FPS -----
+	//#warning remove
+	//mMenuOptions.showFps = 1;
 	u32 newTimer;
 	if (mMenuOptions.showFps)
 	{
@@ -275,7 +277,8 @@ bool8_32 S9xDeinitUpdate (int Width, int Height, bool8_32)
 	}
 
 	/// Now Rotate and Flip onto hw screen
-	SDL_Rotate_270_StandardSurfaces();
+	//SDL_Rotate_270_StandardSurfaces();
+
 	sal_VideoFlip(0);
 }
 
@@ -387,9 +390,11 @@ void S9xSyncSpeed(void)
 	if (IsPreviewingState())
 		return;
 
+	#warning forcing frameSkip
 	// Bypass
 	//Settings.SkipFrames = 0;
 	Settings.SkipFrames = AUTO_FRAMERATE;
+	//Settings.SkipFrames = 1;
 
 	if (Settings.SkipFrames == AUTO_FRAMERATE)
 	{
@@ -637,7 +642,8 @@ int SnesInit()
 	Settings.TurboMode = FALSE;
 	Settings.TurboSkipFrames = 15;
 	Settings.ThreadSound = FALSE;
-	Settings.SoundSync = 1;
+	//Settings.SoundSync = 1; // prefer fluid Video & Audio
+	Settings.SoundSync = 0; // Prefer fluid video
 	Settings.FixFrequency = TRUE;
 	//Settings.NoPatch = true;
 
