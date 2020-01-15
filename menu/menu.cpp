@@ -16,6 +16,7 @@
 /// -------------- DEFINES --------------
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
+#define ABS(x) (((x) < 0) ? (-x) : (x))
 
 //#define MENU_DEBUG
 #define MENU_ERROR
@@ -37,9 +38,12 @@
 
 #define SCROLL_SPEED_PX             240 //This means no animations but also no tearing effect
 #define FPS_MENU                    30
+#define ARROWS_PADDING              8
 
 #define MENU_ZONE_WIDTH             SCREEN_HORIZONTAL_SIZE
 #define MENU_ZONE_HEIGHT            SCREEN_VERTICAL_SIZE
+#define MENU_BG_SQURE_WIDTH         180
+#define MENU_BG_SQUREE_HEIGHT       140
 
 #define MENU_FONT_NAME_TITLE        "/usr/games/menu_resources/OpenSans-Bold.ttf"
 #define MENU_FONT_SIZE_TITLE        22
@@ -48,6 +52,8 @@
 #define MENU_FONT_NAME_SMALL_INFO   "/usr/games/menu_resources/OpenSans-Regular.ttf"
 #define MENU_FONT_SIZE_SMALL_INFO   13
 #define MENU_PNG_BG_PATH            "/usr/games/menu_resources/zone_bg.png"
+#define MENU_PNG_ARROW_TOP_PATH     "/usr/games/menu_resources/arrow_top.png"
+#define MENU_PNG_ARROW_BOTTOM_PATH  "/usr/games/menu_resources/arrow_bottom.png"
 
 #define GRAY_MAIN_R                 85
 #define GRAY_MAIN_G                 85
@@ -103,10 +109,12 @@ static SDL_Surface * backup_hw_screen = NULL;
 static TTF_Font *menu_title_font = NULL;
 static TTF_Font *menu_info_font = NULL;
 static TTF_Font *menu_small_info_font = NULL;
+static SDL_Surface *img_arrow_top = NULL;
+static SDL_Surface *img_arrow_bottom = NULL;
 static SDL_Surface ** menu_zone_surfaces = NULL;
 static int * idx_menus = NULL;
 static int nb_menu_zones = 0;
-
+static int menuItem = 0;
 static int stop_menu_loop = 0;
 
 static SDL_Color text_color = {GRAY_MAIN_R, GRAY_MAIN_G, GRAY_MAIN_B};
@@ -141,6 +149,8 @@ static bool8 SaveStateFile(s8 *filename);
 
 /// -------------- FUNCTIONS IMPLEMENTATION --------------
 void init_menu_SDL(){
+    MENU_DEBUG_PRINTF("Init Menu\n");
+
     /// ----- Loading the fonts -----
     menu_title_font = TTF_OpenFont(MENU_FONT_NAME_TITLE, MENU_FONT_SIZE_TITLE);
     if(!menu_title_font){
@@ -158,23 +168,33 @@ void init_menu_SDL(){
     /// ----- Copy virtual_hw_screen at init ------
     backup_hw_screen = SDL_CreateRGBSurface(SDL_SWSURFACE,
         virtual_hw_screen->w, virtual_hw_screen->h, 16, 0, 0, 0, 0);
-    /*if(SDL_BlitSurface(virtual_hw_screen, NULL, backup_hw_screen, NULL)){
-        MENU_ERROR_PRINTF("ERROR Could not copy virtual_hw_screen: %s\n", SDL_GetError());
-    }*/
+    if(backup_hw_screen == NULL){
+        MENU_ERROR_PRINTF("ERROR in init_menu_SDL: Could not create backup_hw_screen: %s\n", SDL_GetError());
+    }
+
     draw_screen = SDL_CreateRGBSurface(SDL_SWSURFACE,
         virtual_hw_screen->w, virtual_hw_screen->h, 16, 0, 0, 0, 0);
     if(draw_screen == NULL){
         MENU_ERROR_PRINTF("ERROR Could not create draw_screen: %s\n", SDL_GetError());
     }
 
-    /// ------ Save prev key repeat params and set new Key repeat -------
-    SDL_GetKeyRepeat(&backup_key_repeat_delay, &backup_key_repeat_interval);
-    if(SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL)){
-        MENU_ERROR_PRINTF("ERROR with SDL_EnableKeyRepeat: %s\n", SDL_GetError());
+    /// ------ Load arrows imgs -------
+    img_arrow_top = IMG_Load(MENU_PNG_ARROW_TOP_PATH);
+    if(!img_arrow_top) {
+        MENU_ERROR_PRINTF("ERROR IMG_Load: %s\n", IMG_GetError());
     }
+    img_arrow_bottom = IMG_Load(MENU_PNG_ARROW_BOTTOM_PATH);
+    if(!img_arrow_bottom) {
+        MENU_ERROR_PRINTF("ERROR IMG_Load: %s\n", IMG_GetError());
+    }
+
+    /// ------ Init menu zones ------
+    init_menu_zones();
 }
 
 void deinit_menu_SDL(){
+    MENU_DEBUG_PRINTF("End Menu \n");
+
     /// ------ Close font -------
     TTF_CloseFont(menu_title_font);
     TTF_CloseFont(menu_info_font);
@@ -187,10 +207,11 @@ void deinit_menu_SDL(){
     SDL_FreeSurface(backup_hw_screen);
     SDL_FreeSurface(draw_screen);
 
-    /// ------ reset initial key repeat values ------
-    if(SDL_EnableKeyRepeat(backup_key_repeat_delay, backup_key_repeat_interval)){
-        MENU_ERROR_PRINTF("ERROR with SDL_EnableKeyRepeat: %s\n", SDL_GetError());
-    }
+    nb_menu_zones = 0;
+    free(idx_menus);
+
+    SDL_FreeSurface(img_arrow_top);
+    SDL_FreeSurface(img_arrow_bottom);
 }
 
 
@@ -408,11 +429,20 @@ void init_menu_system_values(){
         }
     }
 
+    /// ------ Save prev key repeat params and set new Key repeat -------
+    SDL_GetKeyRepeat(&backup_key_repeat_delay, &backup_key_repeat_interval);
+    if(SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL)){
+        MENU_ERROR_PRINTF("ERROR with SDL_EnableKeyRepeat: %s\n", SDL_GetError());
+    }
+
     /// Get save slot from game
     savestate_slot = (savestate_slot%MAX_SAVE_SLOTS); // security
 }
 
 void menu_screen_refresh(int menuItem, int prevItem, int scroll, uint8_t menu_confirmation, uint8_t menu_action){
+    /// --------- Vars ---------
+    int print_arrows = 1;
+
     /// --------- Clear HW screen ----------
     if(SDL_BlitSurface(backup_hw_screen, NULL, draw_screen, NULL)){
         MENU_ERROR_PRINTF("ERROR Could not Clear draw_screen: %s\n", SDL_GetError());
@@ -564,6 +594,22 @@ void menu_screen_refresh(int menuItem, int prevItem, int scroll, uint8_t menu_co
              SDL_FreeSurface(text_surface);
     }
 
+    /// --------- Print arrows --------
+    if(print_arrows){
+        /// Top arrow
+        SDL_Rect pos_arrow_top;
+        pos_arrow_top.x = (draw_screen->w - img_arrow_top->w)/2;
+        pos_arrow_top.y = (draw_screen->h - MENU_BG_SQUREE_HEIGHT)/4 - img_arrow_top->h/2;
+        SDL_BlitSurface(img_arrow_top, NULL, draw_screen, &pos_arrow_top);
+
+        /// Bottom arrow
+        SDL_Rect pos_arrow_bottom;
+        pos_arrow_bottom.x = (draw_screen->w - img_arrow_bottom->w)/2;
+        pos_arrow_bottom.y = draw_screen->h -
+            (draw_screen->h - MENU_BG_SQUREE_HEIGHT)/4 - img_arrow_bottom->h/2;
+        SDL_BlitSurface(img_arrow_bottom, NULL, draw_screen, &pos_arrow_bottom);
+    }
+
     /// --------- Screen Rotate --------
     //SDL_Rotate_270(draw_screen, hw_screen);
     SDL_BlitSurface(draw_screen, NULL, hw_screen, NULL);
@@ -575,12 +621,13 @@ void menu_screen_refresh(int menuItem, int prevItem, int scroll, uint8_t menu_co
 
 void run_menu_loop()
 {
+    MENU_DEBUG_PRINTF("Launch Menu\n");
+
     SDL_Event event;
     uint32_t prev_ms = SDL_GetTicks();
     uint32_t cur_ms = SDL_GetTicks();
-    static int menuItem=0;
-    int prevItem=menuItem;
     int scroll=0;
+    int start_scroll=0;
     uint8_t screen_refresh = 1;
     char shell_cmd[100];
     FILE *fp;
@@ -590,6 +637,7 @@ void run_menu_loop()
 
     /// ------ Get init values -------
     init_menu_system_values();
+    int prevItem=menuItem;
 
     /// ------ Copy currently displayed screen -------
     /*if(SDL_BlitSurface(virtual_hw_screen, NULL, backup_hw_screen, NULL)){
@@ -859,17 +907,19 @@ void run_menu_loop()
         }
 
         /// --------- Handle Scroll effect ---------
+        if ((scroll>0) || (start_scroll>0)){
+            scroll+=MIN(SCROLL_SPEED_PX, MENU_ZONE_HEIGHT-scroll);
+            start_scroll = 0;
+            screen_refresh = 1;
+        }
+        else if ((scroll<0) || (start_scroll<0)){
+            scroll-=MIN(SCROLL_SPEED_PX, MENU_ZONE_HEIGHT+scroll);
+            start_scroll = 0;
+            screen_refresh = 1;
+        }
         if (scroll>=MENU_ZONE_HEIGHT || scroll<=-MENU_ZONE_HEIGHT) {
             prevItem=menuItem;
             scroll=0;
-            screen_refresh = 1;
-        }
-        else if (scroll>0){
-            scroll+=MIN(SCROLL_SPEED_PX, MENU_ZONE_HEIGHT-scroll);
-            screen_refresh = 1;
-        }
-        else if (scroll<0){
-            scroll-=MIN(SCROLL_SPEED_PX, MENU_ZONE_HEIGHT+scroll);
             screen_refresh = 1;
         }
 
@@ -888,6 +938,11 @@ void run_menu_loop()
 
         /// --------- reset screen refresh ---------
         screen_refresh = 0;
+    }
+
+    /// ------ Reset prev key repeat params -------
+    if(SDL_EnableKeyRepeat(backup_key_repeat_delay, backup_key_repeat_interval)){
+        MENU_ERROR_PRINTF("ERROR with SDL_EnableKeyRepeat: %s\n", SDL_GetError());
     }
 }
 
@@ -1055,7 +1110,7 @@ void run_menu_loop()
 
 
 
-									
+
 void DefaultMenuOptions(void)
 {
 	mMenuOptions->frameSkip=0;   //auto
@@ -1092,7 +1147,7 @@ s32 SaveMenuOptions(const char *path, const char *filename, const char *ext,
 	s8 _filename[SAL_MAX_PATH];
 	s8 _ext[SAL_MAX_PATH];
 	s8 _path[SAL_MAX_PATH];
-	
+
 	if (showMessage)
 	{
 		PrintTitle("");
@@ -1112,7 +1167,7 @@ s32 DeleteMenuOptions(const char *path, const char *filename,
 	s8 _filename[SAL_MAX_PATH];
 	s8 _ext[SAL_MAX_PATH];
 	s8 _path[SAL_MAX_PATH];
-	
+
 	if (showMessage)
 	{
 		PrintTitle("");
@@ -1228,8 +1283,8 @@ s32 MenuMessageBox(const char *message1, const char *message2,
 }
 
 void PrintTitle(const char *title)
-{	
-	sal_ImageDraw(mMenuBackground,SAL_SCREEN_WIDTH, SAL_SCREEN_HEIGHT,0,0);	
+{
+	sal_ImageDraw(mMenuBackground,SAL_SCREEN_WIDTH, SAL_SCREEN_HEIGHT,0,0);
 }
 
 void PrintBar(u32 givenY)
@@ -1273,7 +1328,7 @@ void SwapDirectoryEntry(struct SAL_DIRECTORY_ENTRY *salFrom, struct SAL_DIRECTOR
 	strcpy(salTo->displayName, temp.displayName);
 	strcpy(salTo->filename, temp.filename);
 	salTo->type=temp.type;
-		
+
 }
 
 int FileScan()
@@ -1330,14 +1385,14 @@ int FileScan()
 			while(sal_DirectoryRead(&d, &mRomList[x+startIndex])==SAL_OK)
 			{
 				//Dir entry read
-#if 0	
+#if 0
 				PrintTitle("File Scan");
 				sprintf(text,"Fetched item %d of %d",x, itemCount-1);
 				sal_VideoPrint(8,120,text,SAL_RGB(31,31,31));
 				PrintBar(228-4);
 				sal_VideoPrint(0,228,mRomDir,SAL_RGB(0,0,0));
 				sal_VideoFlip(1);
-#endif	
+#endif
 				if (mRomList[x+startIndex].type == SAL_FILE_TYPE_FILE)
 				{
 					sal_DirectorySplitFilename(mRomList[x+startIndex].filename,path,filename,ext);
@@ -1357,7 +1412,7 @@ int FileScan()
 					dirCount++;
 					x++;
 				}
-				
+
 			}
 			mRomCount=ROM_SELECTOR_ROM_START+dirCount+fileCount;
 			sal_DirectoryClose(&d);
@@ -1392,7 +1447,7 @@ int FileScan()
 		//Now sort directory entries
 		for(a=startIndex;a<startIndex+dirCount;a++)
 		{
-			lowIndex=a;		
+			lowIndex=a;
 			for(b=a+1;b<startIndex+dirCount;b++)
 			{
 				if (sal_StringCompare(mRomList[b].displayName, mRomList[lowIndex].displayName) < 0)
@@ -1408,7 +1463,7 @@ int FileScan()
 		//Now sort file entries
 		for(a=startIndex+dirCount;a<mRomCount;a++)
 		{
-			lowIndex=a;		
+			lowIndex=a;
 			for(b=a+1;b<mRomCount;b++)
 			{
 				if (sal_StringCompare(mRomList[b].displayName, mRomList[lowIndex].displayName) < 0)
@@ -1456,9 +1511,9 @@ s32 FileSelect()
 	s32 scanstart=0,scanend=0;
 	u32 keys=0;
 	s32 size=0, check=SAL_OK;
-	
+
 	previousRom[0] = '\0';
-	
+
 	if (FileScan() != SAL_OK)
 	{
 		strcpy(mRomDir, sal_DirectoryGetUser());
@@ -1470,7 +1525,7 @@ s32 FileSelect()
 			return 0;
 		}
 	}
-	
+
 	focus = LoadLastSelectedRomPos(); //try to load a saved position in the romlist
 
 	smooth=focus<<8;
@@ -1478,7 +1533,7 @@ s32 FileSelect()
 	while (menuExit==0)
 	{
 		keys=sal_InputPollRepeat();
-		
+
 		if (keys & INP_BUTTON_MENU_SELECT)
 		{
 			switch(focus)
@@ -1492,10 +1547,10 @@ s32 FileSelect()
 					action=0;
 					menuExit=1;
 					break;
-				
+
 				case ROM_SELECTOR_DEFAULT_FOCUS: //blank space - do nothing
 					break;
-					
+
 				default:
 					// normal file or dir selected
 					if (mRomList[focus].type == SAL_FILE_TYPE_DIRECTORY)
@@ -1565,7 +1620,7 @@ s32 FileSelect()
 				focus-=12;
 			else if (keys & SAL_INPUT_RIGHT)
 				focus+=12;
-			
+
 			if (focus>mRomCount-1)
 				focus=mRomCount-1;
 			else if (focus<0)
@@ -1609,7 +1664,7 @@ s32 FileSelect()
 		if (scanstart<0) scanstart=0;
 		scanend = focus+15;
 		if (scanend>mRomCount) scanend=mRomCount;
-		
+
 		for (i=scanstart;i<scanend;i++)
 		{
 			s32 x=0,y=0;
@@ -1641,7 +1696,7 @@ s32 FileSelect()
 				sal_VideoPrint(x,y,mRomList[i].displayName,color);
 			}
 
-			
+
 		}
 
 		sal_VideoPrint(0,4,mRomDir,SAL_RGB(31,8,8));
@@ -1668,7 +1723,7 @@ static void ScanSaveStates(s8 *romname)
         printf("In ScanSaveStates, is current save state rom so exit, %s\n", romname);
         return; // is current save state rom so exit
     }
-	
+
 	sal_DirectorySplitFilename(romname,path,filename,ext);
 
 	sprintf(savename,"%s.%s",filename,SAVESTATE_EXT);
@@ -1849,7 +1904,7 @@ static s32 SaveStateSelect(s32 mode)
 			case 9:
 				sal_VideoPrint(87,145-36,"Loading failed",SAL_RGB(31,8,8));
 				break;
-			case 10:	
+			case 10:
 				PrintBar(145-36-4);
 				sal_VideoPrint(75,145-36,"Return to menu",SAL_RGB(31,31,31));
 				break;
@@ -1944,7 +1999,7 @@ static s32 SaveStateSelect(s32 mode)
 static
 void RenderMenu(const char *menuName, s32 menuCount, s32 menuSmooth, s32 menufocus)
 {
-	
+
 	s32 i=0;
 	u16 color=0;
 	PrintTitle(menuName);
@@ -2008,7 +2063,7 @@ s32 SaveStateMenu(void)
 
 				keys=sal_InputPoll();
 			}
-		
+
 			menuExit=1;
 		}
 		else if (keys & INP_BUTTON_MENU_SELECT)
@@ -2164,8 +2219,8 @@ void MainMenuUpdateText(s32 menu_index)
 						"Sound:                     %s",
 						mMenuOptions->soundEnabled ? " ON" : "OFF");
 			break;
-		
-		case MENU_SOUND_RATE:		
+
+		case MENU_SOUND_RATE:
 			sprintf(mMenuText[MENU_SOUND_RATE],"Sound rate:              %5d",mMenuOptions->soundRate);
 			break;
 
@@ -2176,15 +2231,15 @@ void MainMenuUpdateText(s32 menu_index)
 			break;
 
 #if 0
-		case MENU_CPU_SPEED:		
+		case MENU_CPU_SPEED:
 			sprintf(mMenuText[MENU_CPU_SPEED],"Cpu Speed:                  %d",mMenuOptions->cpuSpeed);
 			break;
-		
+
 		case MENU_SOUND_VOL:
 			sprintf(mMenuText[MENU_SOUND_VOL],"Volume:                     %d",mMenuOptions->volume);
 			break;
 #endif
-		
+
 		case MENU_FRAMESKIP:
 			switch(mMenuOptions->frameSkip)
 			{
@@ -2228,19 +2283,19 @@ void MainMenuUpdateText(s32 menu_index)
 					break;
 			}
 			break;
-			
+
 		case MENU_LOAD_GLOBAL_SETTINGS:
 			strcpy(mMenuText[MENU_LOAD_GLOBAL_SETTINGS],"Load global settings");
 			break;
-			
+
 		case MENU_SAVE_GLOBAL_SETTINGS:
 			strcpy(mMenuText[MENU_SAVE_GLOBAL_SETTINGS],"Save global settings");
 			break;
-			
+
 		case MENU_LOAD_CURRENT_SETTINGS:
 			strcpy(mMenuText[MENU_LOAD_CURRENT_SETTINGS],"Load per-game settings");
 			break;
-		
+
 		case MENU_SAVE_CURRENT_SETTINGS:
 			strcpy(mMenuText[MENU_SAVE_CURRENT_SETTINGS],"Save per-game settings");
 			break;
@@ -2316,7 +2371,7 @@ void MenuInit(const char *systemDir, struct MENU_OPTIONS *menuOptions, char *rom
 	s8 filename[SAL_MAX_PATH];
 	u16 *pix;
 	s32 x;
-	
+
 	strcpy(mSystemDir,systemDir);
 	mMenuOptions=menuOptions;
 
@@ -2484,7 +2539,7 @@ s32 MenuRun(s8 *romName)
 					action=EVENT_EXIT_APP;
 					menuExit=1;
 					break;
-				
+
 			}
 		}
 		else if (keys & INP_BUTTON_MENU_CANCEL)
@@ -2551,7 +2606,7 @@ s32 MenuRun(s8 *romName)
 
 #if 0
 				case MENU_CPU_SPEED:
-					
+
 					if (keys & SAL_INPUT_RIGHT)
 					{
 						if(keys&INP_BUTTON_MENU_SELECT)
@@ -2561,7 +2616,7 @@ s32 MenuRun(s8 *romName)
 						else
 						{
 							mMenuOptions->cpuSpeed=sal_CpuSpeedNext(mMenuOptions->cpuSpeed);
-						}	
+						}
 					}
 					else
 					{
@@ -2581,7 +2636,7 @@ s32 MenuRun(s8 *romName)
 				case MENU_SOUND_RATE:
 					if (keys & SAL_INPUT_RIGHT)
 					{
-						mMenuOptions->soundRate=sal_AudioRateNext(mMenuOptions->soundRate);	
+						mMenuOptions->soundRate=sal_AudioRateNext(mMenuOptions->soundRate);
 					}
 					else
 					{
@@ -2645,7 +2700,7 @@ s32 MenuRun(s8 *romName)
 
 		usleep(10000);
 	}
-	
+
   sal_InputWaitForRelease();
 
   return action;

@@ -771,8 +771,8 @@ int mainEntry(int argc, char* argv[])
 
 	MenuInit(sal_DirectoryGetHome(), &mMenuOptions, mRomName);
 	init_menu_SDL();
-	init_menu_zones();
-	init_menu_system_values();
+	//init_menu_zones();
+	//init_menu_system_values();
 
 	if(SnesInit() == SAL_ERROR)
 	{
