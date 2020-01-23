@@ -181,6 +181,7 @@ typedef enum {ASPECT_RATIOS} ENUM_ASPECT_RATIOS_TYPES;
 ////------ Defines to be shared -------
 #define STEP_CHANGE_VOLUME          10
 #define STEP_CHANGE_BRIGHTNESS      10
+#define NOTIF_SECONDS_DISP			2
 
 ////------ Menu commands -------
 #define SHELL_CMD_VOLUME_GET        "volume_get"
@@ -188,6 +189,7 @@ typedef enum {ASPECT_RATIOS} ENUM_ASPECT_RATIOS_TYPES;
 #define SHELL_CMD_BRIGHTNESS_GET    "brightness_get"
 #define SHELL_CMD_BRIGHTNESS_SET    "brightness_set"
 #define SHELL_CMD_POWERDOWN         "shutdown_funkey"
+#define SHELL_CMD_NOTIF				"notif_set"
 
 ////------ Global variables -------
 extern int volume_percentage;
