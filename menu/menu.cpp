@@ -88,11 +88,12 @@ static struct SAL_DIRECTORY_ENTRY *mRomList=NULL;
 static s32 mRomCount;
 static s8 mRomDir[SAL_MAX_PATH]={""};
 
-static struct SAVE_STATE mSaveState[10];  // holds the filenames for the savestate and "inuse" flags
-static s8 mSaveStateName[SAL_MAX_PATH]={""};       // holds the last filename to be scanned for save states
-static s8 mRomName[SAL_MAX_PATH]={""};
-//extern char mRomName[SAL_MAX_PATH];
-static s8 mSystemDir[SAL_MAX_PATH];
+struct SAVE_STATE mSaveState[10];  // holds the filenames for the savestate and "inuse" flags
+s8 mSaveStateName[SAL_MAX_PATH]={""};       // holds the last filename to be scanned for save states
+//s8 mRomName[SAL_MAX_PATH]={""};
+extern char mRomName[SAL_MAX_PATH];
+s8 mSystemDir[SAL_MAX_PATH];
+
 static struct MENU_OPTIONS *mMenuOptions=NULL;
 static u16 mTempFb[SNES_WIDTH*SNES_HEIGHT_EXTENDED];
 ///------------------------------------------------------------
@@ -144,8 +145,6 @@ extern "C" void S9xSaveSRAM(int showWarning);
 static void ScanSaveStates(s8 *romname);
 static void SaveStateTemp();
 static void DeleteStateTemp();
-static bool8 LoadStateFile(s8 *filename);
-static bool8 SaveStateFile(s8 *filename);
 
 /// -------------- FUNCTIONS IMPLEMENTATION --------------
 void init_menu_SDL(){
@@ -1798,8 +1797,7 @@ void DeleteStateTemp()
 	sal_FileDelete(name);
 }
 
-static
-bool8 LoadStateFile(s8 *filename)
+bool LoadStateFile(s8 *filename)
 {
 	bool8 ret;
 	if (!(ret = S9xUnfreezeGame(filename)))
@@ -1807,8 +1805,7 @@ bool8 LoadStateFile(s8 *filename)
 	return ret;
 }
 
-static
-bool8 SaveStateFile(s8 *filename)
+bool SaveStateFile(s8 *filename)
 {
     bool8 ret;
 	if (!(ret = S9xFreezeGame(filename)))

@@ -200,6 +200,11 @@ extern int aspect_ratio;
 extern int aspect_ratio_factor_percent;
 extern int aspect_ratio_factor_step;
 
+extern struct SAVE_STATE mSaveState[10];
+extern s8 mSaveStateName[SAL_MAX_PATH];
+//extern s8 mRomName[SAL_MAX_PATH];
+extern s8 mSystemDir[SAL_MAX_PATH];
+
 //####################################
 //# Functions
 //####################################
@@ -222,6 +227,9 @@ void PrintBar(u32 givenY);
 s32 MenuMessageBox(const char *message1, const char *message2,
 			const char *message3, enum MENU_MESSAGE_BOX_MODE mode);
 u32 IsPreviewingState();
+
+bool LoadStateFile(s8 *filename);
+bool SaveStateFile(s8 *filename);
 
 
 

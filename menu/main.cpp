@@ -41,6 +41,8 @@ static u32 mVolumeTimer=0;
 static u32 mVolumeDisplayTimer=0;
 static u32 mFramesCleared=0;
 static u32 mInMenu=0;
+static int load_state_slot = -1;
+static char *load_state_file = NULL;
 
 static int S9xCompareSDD1IndexEntries (const void *p1, const void *p2)
 {
@@ -538,6 +540,20 @@ int Run(int sound)
 	}
 	sal_AudioResume();
 
+	/* Load previous file */
+	if(load_state_slot != -1){
+		printf("LOADING FROM SLOT %d...\n", load_state_slot+1);
+		LoadStateFile(mSaveState[load_state_slot].fullFilename);
+		printf("LOADED FROM SLOT %d\n", load_state_slot+1);
+		load_state_slot = -1;
+	}
+	else if(load_state_file != NULL){
+		printf("LOADING FROM FILE %s...\n", load_state_file);
+		LoadStateFile(load_state_file);
+		printf("LOADED FROM SLOT %s\n", load_state_file);
+		load_state_file = NULL;
+	}
+
 	while(!mExit)
   	{
 		//Run SNES for one glorious frame
@@ -756,6 +772,55 @@ void _splitpath (const char *path, char *drive, char *dir, char *fname,
 extern "C"
 {
 
+void parse_cmd_line(int argc, char *argv[])
+{
+	int x, unrecognized = 0;
+
+	for (x = 1; x < argc; x++)
+	{
+		if (argv[x][0] == '-')
+		{
+			if (strcasecmp(argv[x], "-loadStateSlot") == 0)
+			{
+				if (x+1 < argc) { ++x; load_state_slot = atoi(argv[x]); }
+			}
+			else if (strcasecmp(argv[x], "-loadStateFile") == 0) {
+				if (x+1 < argc) { ++x; load_state_file = argv[x]; }
+			}
+			else if (strcasecmp(argv[x], "-fps") == 0) {
+
+			}
+			else {
+				printf("Unrecognized command \"%s\" ", argv[x]);
+				unrecognized = 1;
+				break;
+			}
+		}
+		else {
+			strcpy(mRomName, argv[x]); // Record ROM name
+			FILE *f = fopen(mRomName, "rb");
+			if (f) {
+				fclose(f);
+			}
+			else{
+				printf("Rom %s not found \n", mRomName);
+				unrecognized = 1;
+			}
+			break;
+		}
+	}
+
+	if (unrecognized) {
+		printf("\n\n\nPocketSNES \n");
+		printf("usage: %s [options] [romfile]\n", argv[0]);
+		printf("options:\n"
+			" -fps				use to show fps\n"
+			" -loadStateSlot <num>  if ROM is specified, try loading savestate slot <num>\n"
+			" -loadStateFile <filePath>  if ROM is specified, try loading savestate file <filePath>\n");
+		exit(1);
+	}
+}
+
 int mainEntry(int argc, char* argv[])
 {
 	int ref = 0;
@@ -766,8 +831,9 @@ int mainEntry(int argc, char* argv[])
 	sal_VideoInit(16);
 
 	mRomName[0]=0;
-	if (argc >= 2)
- 		strcpy(mRomName, argv[1]); // Record ROM name
+	if (argc >= 2){
+		parse_cmd_line(argc, argv);
+	}
 
 	MenuInit(sal_DirectoryGetHome(), &mMenuOptions, mRomName);
 	init_menu_SDL();
