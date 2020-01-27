@@ -184,12 +184,13 @@ typedef enum {ASPECT_RATIOS} ENUM_ASPECT_RATIOS_TYPES;
 #define NOTIF_SECONDS_DISP			2
 
 ////------ Menu commands -------
-#define SHELL_CMD_VOLUME_GET        "volume_get"
-#define SHELL_CMD_VOLUME_SET        "volume_set"
-#define SHELL_CMD_BRIGHTNESS_GET    "brightness_get"
-#define SHELL_CMD_BRIGHTNESS_SET    "brightness_set"
-#define SHELL_CMD_POWERDOWN         "shutdown_funkey"
-#define SHELL_CMD_NOTIF				"notif_set"
+#define SHELL_CMD_VOLUME_GET        	"volume_get"
+#define SHELL_CMD_VOLUME_SET        	"volume_set"
+#define SHELL_CMD_BRIGHTNESS_GET    	"brightness_get"
+#define SHELL_CMD_BRIGHTNESS_SET    	"brightness_set"
+#define SHELL_CMD_POWERDOWN         	"shutdown_funkey"
+#define SHELL_CMD_NOTIF					"notif_set"
+#define SHELL_CMD_WRITE_QUICK_LOAD_CMD	"write_args_quick_load_file"
 
 ////------ Global variables -------
 extern int volume_percentage;
@@ -199,6 +200,7 @@ extern const char *aspect_ratio_name[];
 extern int aspect_ratio;
 extern int aspect_ratio_factor_percent;
 extern int aspect_ratio_factor_step;
+extern int stop_menu_loop;
 
 extern struct SAVE_STATE mSaveState[10];
 extern s8 mSaveStateName[SAL_MAX_PATH];

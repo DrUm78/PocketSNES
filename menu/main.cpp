@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include "unzip.h"
 #include "zip.h"
 #include "menu.h"
@@ -34,6 +35,7 @@ static u32 mFps=0;
 static u32 mLastTimer=0;
 static u32 mEnterMenu=0;
 u32 mExit=0;
+u32 mQuickSaveAndPoweroff=0;
 static u32 mLoadRequested=0;
 static u32 mSaveRequested=0;
 static u32 mQuickStateTimer=0;
@@ -43,6 +45,8 @@ static u32 mFramesCleared=0;
 static u32 mInMenu=0;
 static int load_state_slot = -1;
 static char *load_state_file = NULL;
+static char *quick_save_file_name = "/root/quick_save";
+static char *prog_name;
 
 static int S9xCompareSDD1IndexEntries (const void *p1, const void *p2)
 {
@@ -488,6 +492,39 @@ void S9xLoadSRAM (void)
 	Memory.LoadSRAM ((s8*)S9xGetFilename (".srm"));
 }
 
+/* Quick save and turn off the console */
+void quick_save_and_poweroff()
+{
+    /* Vars */
+    char shell_cmd[200];
+    FILE *fp;
+
+    /* Save  */
+    if(!SaveStateFile((s8 *)quick_save_file_name)){
+	printf("Save failed");
+	return;
+    }
+
+    /* Write quick load file */
+    sprintf(shell_cmd, "%s SDL_NOMOUSE=1 \"%s\" -loadStateFile \"%s\" \"%s\"",
+	SHELL_CMD_WRITE_QUICK_LOAD_CMD, prog_name, quick_save_file_name, mRomName);
+    printf("Cmd write quick load file:\n	%s\n", shell_cmd);
+    fp = popen(shell_cmd, "r");
+    if (fp == NULL) {
+	printf("Failed to run command %s\n", shell_cmd);
+    }
+
+    /* Clean Poweroff */
+    sprintf(shell_cmd, "%s", SHELL_CMD_POWERDOWN);
+    fp = popen(shell_cmd, "r");
+    if (fp == NULL) {
+	printf("Failed to run command %s\n", shell_cmd);
+    }
+
+    /* Exit Emulator */
+    mExit = 1;
+}
+
 static u32 LastAudioRate = 0;
 static u32 LastStereo = 0;
 static u32 LastHz = 0;
@@ -495,7 +532,7 @@ static u32 LastHz = 0;
 static
 int Run(int sound)
 {
-  	int i;
+	int i;
 	bool PAL = !!(Memory.FillRAM[0x2133] & 4);
 
 	sal_VideoEnterGame(mMenuOptions.fullScreen, PAL, Memory.ROMFramesPerSecond);
@@ -555,7 +592,7 @@ int Run(int sound)
 	}
 
 	while(!mExit)
-  	{
+	{
 		//Run SNES for one glorious frame
 		S9xMainLoop ();
 
@@ -565,12 +602,18 @@ int Run(int sound)
 		so.err_counter = 0;
 
 		/// Menu
-		if(mEnterMenu){
+		if(mEnterMenu && !mQuickSaveAndPoweroff){
 			run_menu_loop();
 			mEnterMenu = 0;
 			sal_force_no_menu_detection();
 		}
-  	}
+
+		// Quick save and poweroff
+		if(mQuickSaveAndPoweroff){
+			quick_save_and_poweroff();
+			mQuickSaveAndPoweroff = 0;
+		}
+	}
 
 	sal_AudioPause();
 
@@ -599,7 +642,7 @@ int SnesRomLoad()
 	char text[256];
 	FILE *stream=NULL;
 
-    	MenuMessageBox("Loading ROM...",mRomName,"",MENU_MESSAGE_BOX_MODE_MSG);
+	MenuMessageBox("Loading ROM...",mRomName,"",MENU_MESSAGE_BOX_MODE_MSG);
 
 	if (!Memory.LoadROM (mRomName))
 	{
@@ -703,7 +746,7 @@ int SnesInit()
 
 	if (!S9xGraphicsInit ())
 	{
-         	S9xMessage (0,0,"Failed to init graphics");
+		S9xMessage (0,0,"Failed to init graphics");
 		return SAL_ERROR;
 	}
 
@@ -772,10 +815,26 @@ void _splitpath (const char *path, char *drive, char *dir, char *fname,
 extern "C"
 {
 
+/* Handler for SIGUSR1, caused by closing the console */
+void handle_sigusr1(int sig)
+{
+    //printf("Caught signal USR1 %d\n", sig);
+
+    /* Exit menu if it was launched */
+    stop_menu_loop = 1;
+
+    /* Signal to quick save and poweoff after next loop */
+    mQuickSaveAndPoweroff = 1;
+}
+
 void parse_cmd_line(int argc, char *argv[])
 {
 	int x, unrecognized = 0;
 
+	/* Save program name */
+	prog_name = argv[0];
+
+	/* Parse args */
 	for (x = 1; x < argc; x++)
 	{
 		if (argv[x][0] == '-')
@@ -796,8 +855,9 @@ void parse_cmd_line(int argc, char *argv[])
 				break;
 			}
 		}
+		/* Save ROM name */
 		else {
-			strcpy(mRomName, argv[x]); // Record ROM name
+			strcpy(mRomName, argv[x]);
 			FILE *f = fopen(mRomName, "rb");
 			if (f) {
 				fclose(f);
@@ -823,23 +883,28 @@ void parse_cmd_line(int argc, char *argv[])
 
 int mainEntry(int argc, char* argv[])
 {
+	/* Init vars */
 	int ref = 0;
-
 	s32 event=EVENT_NONE;
 
-	sal_Init();
-	sal_VideoInit(16);
+	/* Init Signals */
+	signal(SIGUSR1, handle_sigusr1);
 
+	/* Parse arguments */
 	mRomName[0]=0;
 	if (argc >= 2){
 		parse_cmd_line(argc, argv);
 	}
 
+	/* Init Video */
+	sal_Init();
+	sal_VideoInit(16);
 	MenuInit(sal_DirectoryGetHome(), &mMenuOptions, mRomName);
 	init_menu_SDL();
 	//init_menu_zones();
 	//init_menu_system_values();
 
+	/* Init emulation */
 	if(SnesInit() == SAL_ERROR)
 	{
 		printf("SnesInit() == SAL_ERROR\n");
@@ -847,6 +912,7 @@ int mainEntry(int argc, char* argv[])
 		return 0;
 	}
 
+	/* Main loop */
 	while(!mExit)
 	{
 		/*mInMenu=1;
@@ -912,7 +978,7 @@ int mainEntry(int argc, char* argv[])
 
 	deinit_menu_SDL();
 	sal_Reset();
-  	return 0;
+	return 0;
 }
 
 }
