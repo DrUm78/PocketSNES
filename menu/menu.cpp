@@ -91,7 +91,6 @@ static s8 mRomDir[SAL_MAX_PATH]={""};
 struct SAVE_STATE mSaveState[10];  // holds the filenames for the savestate and "inuse" flags
 s8 mSaveStateName[SAL_MAX_PATH]={""};       // holds the last filename to be scanned for save states
 //s8 mRomName[SAL_MAX_PATH]={""};
-extern char mRomName[SAL_MAX_PATH];
 s8 mSystemDir[SAL_MAX_PATH];
 
 static struct MENU_OPTIONS *mMenuOptions=NULL;
@@ -2385,7 +2384,8 @@ void MenuInit(const char *systemDir, struct MENU_OPTIONS *menuOptions, char *rom
 	u16 *pix;
 	s32 x;
 
-	strcpy(mSystemDir,systemDir);
+	//strcpy(mSystemDir,systemDir);
+    strcpy(mSystemDir,mRomPath);
 	mMenuOptions=menuOptions;
 
 	if(LoadMenuOptions(mSystemDir, DEFAULT_ROM_DIR_FILENAME, DEFAULT_ROM_DIR_EXT, mRomDir, SAL_MAX_PATH, 0)!=SAL_OK)

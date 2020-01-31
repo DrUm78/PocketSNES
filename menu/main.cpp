@@ -26,6 +26,7 @@ static struct MENU_OPTIONS mMenuOptions;
 static int mEmuScreenHeight;
 static int mEmuScreenWidth;
 char mRomName[SAL_MAX_PATH]={""};
+char mRomPath[SAL_MAX_PATH];
 static u32 mLastRate=0;
 
 static s8 mFpsDisplay[16]={""};
@@ -45,7 +46,8 @@ static u32 mFramesCleared=0;
 static u32 mInMenu=0;
 static int load_state_slot = -1;
 static char *load_state_file = NULL;
-static char *quick_save_file_name = "/root/quick_save";
+static char *quick_save_file_extension = "quicksave";
+static char quick_save_file[SAL_MAX_PATH]={""};
 static char *prog_name;
 
 static int S9xCompareSDD1IndexEntries (const void *p1, const void *p2)
@@ -500,14 +502,14 @@ void quick_save_and_poweroff()
     FILE *fp;
 
     /* Save  */
-    if(!SaveStateFile((s8 *)quick_save_file_name)){
+    if(!SaveStateFile((s8 *)quick_save_file)){
 	printf("Save failed");
 	return;
     }
 
     /* Write quick load file */
     sprintf(shell_cmd, "%s SDL_NOMOUSE=1 \"%s\" -loadStateFile \"%s\" \"%s\"",
-	SHELL_CMD_WRITE_QUICK_LOAD_CMD, prog_name, quick_save_file_name, mRomName);
+	SHELL_CMD_WRITE_QUICK_LOAD_CMD, prog_name, quick_save_file, mRomName);
     printf("Cmd write quick load file:\n	%s\n", shell_cmd);
     fp = popen(shell_cmd, "r");
     if (fp == NULL) {
@@ -855,11 +857,25 @@ void parse_cmd_line(int argc, char *argv[])
 				break;
 			}
 		}
-		/* Save ROM name */
+		/* Check if file exists, Save ROM name, and ROM path */
 		else {
 			strcpy(mRomName, argv[x]);
 			FILE *f = fopen(mRomName, "rb");
 			if (f) {
+				/* Save Rom path */
+				strcpy(mRomPath, mRomName);
+				char *slash = strrchr ((char*)mRomPath, '/');
+				*slash = 0;
+
+				/* Rom name without extension */
+				char *point = strrchr ((char*)slash+1, '.');
+				*point = 0;
+
+				/* Set quicksave filename */
+				sprintf(quick_save_file, "%s/%s.%s",
+					mRomPath, slash+1, quick_save_file_extension);
+				printf("************ quick_save_file: %s\n", quick_save_file);
+
 				fclose(f);
 			}
 			else{

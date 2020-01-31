@@ -69,7 +69,7 @@ extern "C" {
 #define RES_HW_SCREEN_VERTICAL    240
 #define SAL_SCREEN_WIDTH			240
 #define SAL_SCREEN_HEIGHT			240
-#define SAL_MAX_PATH				256
+#define SAL_MAX_PATH				512
 #define SAL_DIR_SEP				"/"
 #define SAL_DIR_SEP_BAD				"\\"
 
