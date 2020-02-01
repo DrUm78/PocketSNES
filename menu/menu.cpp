@@ -1027,6 +1027,7 @@ int launch_resume_menu_loop()
                         if(menu_confirmation){
                             /// ------ Reset menu confirmation ------
                             menu_confirmation = 0;
+
                             /// ------ Refresh screen ------
                             screen_refresh = 1;
                         }
@@ -1045,6 +1046,9 @@ int launch_resume_menu_loop()
                         MENU_DEBUG_PRINTF("Option left\n");
                         option_idx = (!option_idx)?(NB_RESUME_OPTIONS-1):(option_idx-1);
 
+                        /// ------ Reset menu confirmation ------
+                        menu_confirmation = 0;
+
                         /// ------ Refresh screen ------
                         screen_refresh = 1;
                         break;
@@ -1053,6 +1057,9 @@ int launch_resume_menu_loop()
                     case SDLK_RIGHT:
                         MENU_DEBUG_PRINTF("Option right\n");
                         option_idx = (option_idx+1)%NB_RESUME_OPTIONS;
+
+                        /// ------ Reset menu confirmation ------
+                        menu_confirmation = 0;
 
                         /// ------ Refresh screen ------
                         screen_refresh = 1;
