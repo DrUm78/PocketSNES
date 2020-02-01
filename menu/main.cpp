@@ -498,7 +498,7 @@ void S9xLoadSRAM (void)
 void quick_save_and_poweroff()
 {
     /* Vars */
-    char shell_cmd[200];
+    char shell_cmd[200+SAL_MAX_PATH];
     FILE *fp;
 
     /* Save  */
