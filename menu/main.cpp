@@ -2,6 +2,7 @@
 #include <sal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <signal.h>
 #include "unzip.h"
@@ -27,6 +28,8 @@ static int mEmuScreenHeight;
 static int mEmuScreenWidth;
 char mRomName[SAL_MAX_PATH]={""};
 char mRomPath[SAL_MAX_PATH];
+static char *quick_save_file_extension = "quicksave";
+char quick_save_file[SAL_MAX_PATH]={""};
 static u32 mLastRate=0;
 
 static s8 mFpsDisplay[16]={""};
@@ -46,8 +49,6 @@ static u32 mFramesCleared=0;
 static u32 mInMenu=0;
 static int load_state_slot = -1;
 static char *load_state_file = NULL;
-static char *quick_save_file_extension = "quicksave";
-static char quick_save_file[SAL_MAX_PATH]={""};
 static char *prog_name;
 
 static int S9xCompareSDD1IndexEntries (const void *p1, const void *p2)
@@ -579,18 +580,40 @@ int Run(int sound)
 	}
 	sal_AudioResume();
 
-	/* Load previous file */
+	/* Load slot */
 	if(load_state_slot != -1){
 		printf("LOADING FROM SLOT %d...\n", load_state_slot+1);
 		LoadStateFile(mSaveState[load_state_slot].fullFilename);
 		printf("LOADED FROM SLOT %d\n", load_state_slot+1);
 		load_state_slot = -1;
 	}
+	/* Load file */
 	else if(load_state_file != NULL){
 		printf("LOADING FROM FILE %s...\n", load_state_file);
 		LoadStateFile(load_state_file);
 		printf("LOADED FROM SLOT %s\n", load_state_file);
 		load_state_file = NULL;
+	}
+	/* Load quick save file */
+	else if(access( quick_save_file, F_OK ) != -1){
+		printf("Found quick save file: %s\n", quick_save_file);
+
+		int resume = launch_resume_menu_loop();
+		if(resume == RESUME_YES){
+			printf("Resume game from quick save file: %s\n", quick_save_file);
+			LoadStateFile(quick_save_file);
+		}
+		else{
+			printf("Reset game\n");
+		}
+	}
+
+	/* Remove quicksave file if present */
+	if (remove(quick_save_file) == 0){
+	printf("Deleted successfully: %s\n", quick_save_file);
+	}
+	else{
+	printf("Unable to delete the file: %s\n", quick_save_file);
 	}
 
 	while(!mExit)

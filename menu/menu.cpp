@@ -136,6 +136,10 @@ int aspect_ratio = ASPECT_RATIOS_TYPE_STRECHED;
 int aspect_ratio_factor_percent = 50;
 int aspect_ratio_factor_step = 10;
 
+#undef X
+#define X(a, b) b,
+const char *resume_options_str[] = {RESUME_OPTIONS};
+
 int savestate_slot = 0;
 extern u32 mExit;
 
@@ -880,7 +884,11 @@ void run_menu_loop()
                             MENU_DEBUG_PRINTF("Exit game\n");
                             if(menu_confirmation){
                                 MENU_DEBUG_PRINTF("Exit game - confirmed\n");
-                                /// ----- The game should be saved here ----
+                                /// ----- The game is quick saved here ----
+                                if(!SaveStateFile((s8 *)quick_save_file)){
+                                    MENU_ERROR_PRINTF("Quick save failed");
+                                    return;
+                                }
 
                                 /// ----- Exit game and back to launcher ----
                                 mExit = 1;
@@ -962,10 +970,170 @@ void run_menu_loop()
 
 
 
+/****************************/
+/*    Quick Resume Menu     */
+/****************************/
+int launch_resume_menu_loop()
+{
+    MENU_DEBUG_PRINTF("Init resume menu\n");
+
+    /* Decare vars */
+    SDL_Surface *surface_menu_bg = NULL;
+    SDL_Surface *text_surface = NULL;
+    char text_tmp[40];
+    SDL_Rect text_pos;
+    SDL_Event event;
+    uint32_t prev_ms = SDL_GetTicks();
+    uint32_t cur_ms = SDL_GetTicks();
+    stop_menu_loop = 0;
+    uint8_t screen_refresh = 1;
+    uint8_t menu_confirmation = 0;
+    int option_idx=RESUME_YES;
+
+    /* Save prev key repeat params and set new Key repeat */
+    SDL_GetKeyRepeat(&backup_key_repeat_delay, &backup_key_repeat_interval);
+    if(SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL)){
+        MENU_ERROR_PRINTF("ERROR with SDL_EnableKeyRepeat: %s\n", SDL_GetError());
+    }
+
+    /* Load BG */
+    surface_menu_bg = IMG_Load(MENU_PNG_BG_PATH);
+    if(!surface_menu_bg) {
+        MENU_ERROR_PRINTF("ERROR IMG_Load: %s\n", IMG_GetError());
+    }
+
+    /* Draw static content on background */
+    text_surface = TTF_RenderText_Blended(menu_title_font, "RESUME ?", text_color);
+    text_pos.x = (surface_menu_bg->w - MENU_ZONE_WIDTH)/2 + (MENU_ZONE_WIDTH - text_surface->w)/2;
+    text_pos.y = surface_menu_bg->h - MENU_ZONE_HEIGHT/2 - text_surface->h/2 - padding_y_from_center_menu_zone*2;
+    SDL_BlitSurface(text_surface, NULL, surface_menu_bg, &text_pos);
+    SDL_FreeSurface(text_surface);
+
+    /* Main loop */
+    while (!stop_menu_loop)
+    {
+        /* Handle keyboard events */
+        while (SDL_PollEvent(&event))
+        switch(event.type)
+        {
+            case SDL_QUIT:
+                mExit = 1;
+                stop_menu_loop = 1;
+                break;
+            case SDL_KEYDOWN:
+                switch (event.key.keysym.sym)
+                {
+                    case SDLK_b:
+                        if(menu_confirmation){
+                            /// ------ Reset menu confirmation ------
+                            menu_confirmation = 0;
+                            /// ------ Refresh screen ------
+                            screen_refresh = 1;
+                        }
+                        /*else{
+                            stop_menu_loop = 1;
+                        }*/
+                        break;
+
+                    case SDLK_q:
+                    case SDLK_ESCAPE:
+                        stop_menu_loop = 1;
+                        break;
+
+                    case SDLK_l:
+                    case SDLK_LEFT:
+                        MENU_DEBUG_PRINTF("Option left\n");
+                        option_idx = (!option_idx)?(NB_RESUME_OPTIONS-1):(option_idx-1);
+
+                        /// ------ Refresh screen ------
+                        screen_refresh = 1;
+                        break;
+
+                    case SDLK_r:
+                    case SDLK_RIGHT:
+                        MENU_DEBUG_PRINTF("Option right\n");
+                        option_idx = (option_idx+1)%NB_RESUME_OPTIONS;
+
+                        /// ------ Refresh screen ------
+                        screen_refresh = 1;
+                        break;
+
+                    case SDLK_a:
+                    case SDLK_RETURN:
+                        MENU_DEBUG_PRINTF("Pressed A\n");
+                        if(menu_confirmation){
+                            MENU_DEBUG_PRINTF("Confirmed\n");
+
+                            /// ----- exit menu  ----
+                            stop_menu_loop = 1;
+                        }
+                        else{
+                            MENU_DEBUG_PRINTF("Asking confirmation\n");
+                            menu_confirmation = 1;
+
+                            /// ------ Refresh screen ------
+                            screen_refresh = 1;
+                        }
+                        break;
+
+                    default:
+                        //MENU_DEBUG_PRINTF("Keydown: %d\n", event.key.keysym.sym);
+                        break;
+            }
+            break;
+        }
+
+        /* Handle FPS */
+        cur_ms = SDL_GetTicks();
+        if(cur_ms-prev_ms < 1000/FPS_MENU){
+            SDL_Delay(1000/FPS_MENU - (cur_ms-prev_ms));
+        }
+        prev_ms = SDL_GetTicks();
+
+        /* Refresh screen */
+        if(screen_refresh){
+            /* Draw BG */
+            if(SDL_BlitSurface(surface_menu_bg, NULL, hw_screen, NULL)){
+                MENU_ERROR_PRINTF("ERROR Could not draw background: %s\n", SDL_GetError());
+            }
+
+            /* Blitting menu info */
+            sprintf(text_tmp, "<  %s  >", resume_options_str[option_idx]);
+            text_surface = TTF_RenderText_Blended(menu_info_font, text_tmp, text_color);
+            text_pos.x = (hw_screen->w - MENU_ZONE_WIDTH)/2 + (MENU_ZONE_WIDTH - text_surface->w)/2;
+            text_pos.y = hw_screen->h - MENU_ZONE_HEIGHT/2 - text_surface->h/2;
+            SDL_BlitSurface(text_surface, NULL, hw_screen, &text_pos);
 
 
+            if(menu_confirmation){
+                sprintf(text_tmp, "Are you sure ?");
+                text_surface = TTF_RenderText_Blended(menu_info_font, text_tmp, text_color);
+                text_pos.x = (hw_screen->w - MENU_ZONE_WIDTH)/2 + (MENU_ZONE_WIDTH - text_surface->w)/2;
+                text_pos.y = hw_screen->h - MENU_ZONE_HEIGHT/2 - text_surface->h/2 + 2*padding_y_from_center_menu_zone;
+                SDL_BlitSurface(text_surface, NULL, hw_screen, &text_pos);
+            }
 
+            /* Flip Screen */
+            SDL_Flip(hw_screen);
+        }
 
+        /* reset screen refresh */
+        screen_refresh = 0;
+    }
+
+    /* Free SDL Surfaces */
+    if(surface_menu_bg)
+        SDL_FreeSurface(surface_menu_bg);
+    if(text_surface)
+        SDL_FreeSurface(text_surface);
+
+    /* Reset prev key repeat params */
+    if(SDL_EnableKeyRepeat(backup_key_repeat_delay, backup_key_repeat_interval)){
+        MENU_ERROR_PRINTF("ERROR with SDL_EnableKeyRepeat: %s\n", SDL_GetError());
+    }
+
+    return option_idx;
+}
 
 
 

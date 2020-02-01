@@ -178,6 +178,17 @@ typedef enum{
 #define X(a, b) a,
 typedef enum {ASPECT_RATIOS} ENUM_ASPECT_RATIOS_TYPES;
 
+///------ Definition of the different resume options
+#define RESUME_OPTIONS \
+    X(RESUME_YES, "YES") \
+    X(RESUME_NO, "NO ") \
+    X(NB_RESUME_OPTIONS, "")
+
+////------ Enumeration of the different aspect ratios ------
+#undef X
+#define X(a, b) a,
+typedef enum {RESUME_OPTIONS} ENUM_RESUME_OPTIONS;
+
 ////------ Defines to be shared -------
 #define STEP_CHANGE_VOLUME          10
 #define STEP_CHANGE_BRIGHTNESS      10
@@ -208,6 +219,7 @@ extern s8 mSaveStateName[SAL_MAX_PATH];
 extern s8 mSystemDir[SAL_MAX_PATH];
 extern char mRomName[SAL_MAX_PATH];
 extern char mRomPath[SAL_MAX_PATH];
+extern char quick_save_file[SAL_MAX_PATH];
 
 //####################################
 //# Functions
@@ -242,6 +254,8 @@ void deinit_menu_SDL();
 void init_menu_zones();
 void init_menu_system_values();
 void run_menu_loop();
+
+int launch_resume_menu_loop();
 
 
 #endif /* _MENU_H_ */
