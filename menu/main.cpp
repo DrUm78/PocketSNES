@@ -880,6 +880,7 @@ void parse_cmd_line(int argc, char *argv[])
 				break;
 			}
 		}
+
 		/* Check if file exists, Save ROM name, and ROM path */
 		else {
 			strcpy(mRomName, argv[x]);
@@ -932,7 +933,7 @@ int mainEntry(int argc, char* argv[])
 	/* Parse arguments */
 	mRomName[0]=0;
 	if (argc >= 2){
-		parse_cmd_line(argc, argv);
+		(parse_cmd_lineargc, argv);
 	}
 
 	/* Init Video */

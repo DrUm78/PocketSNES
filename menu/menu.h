@@ -184,7 +184,7 @@ typedef enum {ASPECT_RATIOS} ENUM_ASPECT_RATIOS_TYPES;
     X(RESUME_NO, "NEW GAME") \
     X(NB_RESUME_OPTIONS, "")
 
-////------ Enumeration of the different aspect ratios ------
+////------ Enumeration of the different resume options ------
 #undef X
 #define X(a, b) a,
 typedef enum {RESUME_OPTIONS} ENUM_RESUME_OPTIONS;
@@ -200,7 +200,7 @@ typedef enum {RESUME_OPTIONS} ENUM_RESUME_OPTIONS;
 #define SHELL_CMD_BRIGHTNESS_GET    	"brightness_get"
 #define SHELL_CMD_BRIGHTNESS_SET    	"brightness_set"
 #define SHELL_CMD_POWERDOWN         	"shutdown_funkey"
-#define SHELL_CMD_NOTIF					"notif_set"
+#define SHELL_CMD_NOTIF					      "notif_set"
 #define SHELL_CMD_WRITE_QUICK_LOAD_CMD	"write_args_quick_load_file"
 
 ////------ Global variables -------
