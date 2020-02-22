@@ -42,8 +42,8 @@
 
 #define MENU_ZONE_WIDTH             SCREEN_HORIZONTAL_SIZE
 #define MENU_ZONE_HEIGHT            SCREEN_VERTICAL_SIZE
-#define MENU_BG_SQURE_WIDTH         180
-#define MENU_BG_SQUREE_HEIGHT       140
+#define MENU_BG_SQUARE_WIDTH        180
+#define MENU_BG_SQUARE_HEIGHT       140
 
 #define MENU_FONT_NAME_TITLE        "/usr/games/menu_resources/OpenSans-Bold.ttf"
 #define MENU_FONT_SIZE_TITLE        22
@@ -605,14 +605,14 @@ void menu_screen_refresh(int menuItem, int prevItem, int scroll, uint8_t menu_co
         /// Top arrow
         SDL_Rect pos_arrow_top;
         pos_arrow_top.x = (draw_screen->w - img_arrow_top->w)/2;
-        pos_arrow_top.y = (draw_screen->h - MENU_BG_SQUREE_HEIGHT)/4 - img_arrow_top->h/2;
+        pos_arrow_top.y = (draw_screen->h - MENU_BG_SQUARE_HEIGHT)/4 - img_arrow_top->h/2;
         SDL_BlitSurface(img_arrow_top, NULL, draw_screen, &pos_arrow_top);
 
         /// Bottom arrow
         SDL_Rect pos_arrow_bottom;
         pos_arrow_bottom.x = (draw_screen->w - img_arrow_bottom->w)/2;
         pos_arrow_bottom.y = draw_screen->h -
-            (draw_screen->h - MENU_BG_SQUREE_HEIGHT)/4 - img_arrow_bottom->h/2;
+            (draw_screen->h - MENU_BG_SQUARE_HEIGHT)/4 - img_arrow_bottom->h/2;
         SDL_BlitSurface(img_arrow_bottom, NULL, draw_screen, &pos_arrow_bottom);
     }
 
@@ -978,7 +978,6 @@ int launch_resume_menu_loop()
     MENU_DEBUG_PRINTF("Init resume menu\n");
 
     /* Decare vars */
-    SDL_Surface *surface_menu_bg = NULL;
     SDL_Surface *text_surface = NULL;
     char text_tmp[40];
     SDL_Rect text_pos;
@@ -997,17 +996,30 @@ int launch_resume_menu_loop()
     }
 
     /* Load BG */
-    surface_menu_bg = IMG_Load(MENU_PNG_BG_PATH);
-    if(!surface_menu_bg) {
+    SDL_Surface *img_square_bg = IMG_Load(MENU_PNG_BG_PATH);
+    if(!img_square_bg) {
         MENU_ERROR_PRINTF("ERROR IMG_Load: %s\n", IMG_GetError());
     }
+    SDL_Surface *bg_surface = SDL_CreateRGBSurface(SDL_SWSURFACE, hw_screen->w, hw_screen->h, 16, 0, 0, 0, 0);
+    SDL_BlitSurface(img_square_bg, NULL, bg_surface, NULL);
+    SDL_FreeSurface(img_square_bg);
 
-    /* Draw static content on background */
-    text_surface = TTF_RenderText_Blended(menu_title_font, "RESUME ?", text_color);
-    text_pos.x = (surface_menu_bg->w - MENU_ZONE_WIDTH)/2 + (MENU_ZONE_WIDTH - text_surface->w)/2;
-    text_pos.y = surface_menu_bg->h - MENU_ZONE_HEIGHT/2 - text_surface->h/2 - padding_y_from_center_menu_zone*2;
-    SDL_BlitSurface(text_surface, NULL, surface_menu_bg, &text_pos);
-    SDL_FreeSurface(text_surface);
+
+    /*  Print top arrow */
+    SDL_Rect pos_arrow_top;
+    pos_arrow_top.x = (bg_surface->w - img_arrow_top->w)/2;
+    pos_arrow_top.y = (bg_surface->h - MENU_BG_SQUARE_HEIGHT)/4 - img_arrow_top->h/2;
+    SDL_BlitSurface(img_arrow_top, NULL, bg_surface, &pos_arrow_top);
+
+    /*  Print bottom arrow */
+    SDL_Rect pos_arrow_bottom;
+    pos_arrow_bottom.x = (bg_surface->w - img_arrow_bottom->w)/2;
+    pos_arrow_bottom.y = bg_surface->h -
+            (bg_surface->h - MENU_BG_SQUARE_HEIGHT)/4 - img_arrow_bottom->h/2;
+    SDL_BlitSurface(img_arrow_bottom, NULL, bg_surface, &pos_arrow_bottom);
+
+    if (text_surface)
+        SDL_FreeSurface(text_surface);
 
     /* Main loop */
     while (!stop_menu_loop)
@@ -1041,9 +1053,9 @@ int launch_resume_menu_loop()
                         stop_menu_loop = 1;
                         break;
 
-                    case SDLK_l:
-                    case SDLK_LEFT:
-                        MENU_DEBUG_PRINTF("Option left\n");
+                    case SDLK_u:
+                    case SDLK_UP:
+                        MENU_DEBUG_PRINTF("Option UP\n");
                         option_idx = (!option_idx)?(NB_RESUME_OPTIONS-1):(option_idx-1);
 
                         /// ------ Reset menu confirmation ------
@@ -1053,9 +1065,9 @@ int launch_resume_menu_loop()
                         screen_refresh = 1;
                         break;
 
-                    case SDLK_r:
-                    case SDLK_RIGHT:
-                        MENU_DEBUG_PRINTF("Option right\n");
+                    case SDLK_d:
+                    case SDLK_DOWN:
+                        MENU_DEBUG_PRINTF("Option DWON\n");
                         option_idx = (option_idx+1)%NB_RESUME_OPTIONS;
 
                         /// ------ Reset menu confirmation ------
@@ -1099,19 +1111,19 @@ int launch_resume_menu_loop()
 
         /* Refresh screen */
         if(screen_refresh){
-            /* Draw BG */
-            if(SDL_BlitSurface(surface_menu_bg, NULL, hw_screen, NULL)){
+            /* Clear and draw BG */
+            SDL_FillRect(hw_screen, NULL, 0);
+            if(SDL_BlitSurface(bg_surface, NULL, hw_screen, NULL)){
                 MENU_ERROR_PRINTF("ERROR Could not draw background: %s\n", SDL_GetError());
             }
 
-            /* Blitting menu info */
-            sprintf(text_tmp, "<  %s  >", resume_options_str[option_idx]);
-            text_surface = TTF_RenderText_Blended(menu_info_font, text_tmp, text_color);
+            /* Draw resume or reset option */
+            text_surface = TTF_RenderText_Blended(menu_title_font, resume_options_str[option_idx], text_color);
             text_pos.x = (hw_screen->w - MENU_ZONE_WIDTH)/2 + (MENU_ZONE_WIDTH - text_surface->w)/2;
             text_pos.y = hw_screen->h - MENU_ZONE_HEIGHT/2 - text_surface->h/2;
             SDL_BlitSurface(text_surface, NULL, hw_screen, &text_pos);
 
-
+            /* Draw confirmation */
             if(menu_confirmation){
                 sprintf(text_tmp, "Are you sure ?");
                 text_surface = TTF_RenderText_Blended(menu_info_font, text_tmp, text_color);
@@ -1129,8 +1141,8 @@ int launch_resume_menu_loop()
     }
 
     /* Free SDL Surfaces */
-    if(surface_menu_bg)
-        SDL_FreeSurface(surface_menu_bg);
+    if(bg_surface)
+        SDL_FreeSurface(bg_surface);
     if(text_surface)
         SDL_FreeSurface(text_surface);
 

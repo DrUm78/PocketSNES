@@ -180,8 +180,8 @@ typedef enum {ASPECT_RATIOS} ENUM_ASPECT_RATIOS_TYPES;
 
 ///------ Definition of the different resume options
 #define RESUME_OPTIONS \
-    X(RESUME_YES, "YES") \
-    X(RESUME_NO, "NO ") \
+    X(RESUME_YES, "RESUME GAME") \
+    X(RESUME_NO, "NEW GAME") \
     X(NB_RESUME_OPTIONS, "")
 
 ////------ Enumeration of the different aspect ratios ------
