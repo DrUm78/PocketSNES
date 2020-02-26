@@ -150,11 +150,18 @@ s32 sal_ImageDrawTiled(u16 *image, u32 width, u32 height, s32 xScroll, s32 yScro
 s32 sal_ImageDraw(u16 *image, u32 width, u32 height, s32 x, s32 y);
 s32 sal_HighlightBar(s32 width, s32 height, s32 x, s32 y);
 
+void sal_VideoLock();
+void sal_VideoUnlock();
+
 void flip_NNOptimized_AllowOutOfScreen(uint16_t *src_screen, uint16_t *dst_screen,
 								int src_w, int src_h, int dst_w, int dst_h);
 void flip_Upscaling_Bilinear(uint16_t *src_screen, uint16_t *dst_screen,
 								int src_w, int src_h, int dst_w, int dst_h);
+void flip_Downscale_LeftRightGaussianFilter(uint16_t *src_screen, uint16_t *dst_screen,
+								int src_w, int src_h, int dst_w, int dst_h);
 void flip_Downscale_LeftRightUpDownGaussianFilter_Optimized4(uint16_t *src_screen, uint16_t *dst_screen,
+								int src_w, int src_h, int dst_w, int dst_h);
+void flip_Downscale_LeftRightUpDownGaussianFilter_Optimized4Forward(uint16_t *src_screen, uint16_t *dst_screen,
 								int src_w, int src_h, int dst_w, int dst_h);
 void flip_Downscale_LeftRightUpDownGaussianFilter_Optimized8(uint16_t *src_screen, uint16_t *dst_screen,
 								int src_w, int src_h, int dst_w, int dst_h);

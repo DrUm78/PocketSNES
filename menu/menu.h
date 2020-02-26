@@ -167,10 +167,8 @@ typedef enum{
 
 ///------ Definition of the different aspect ratios
 #define ASPECT_RATIOS \
-    X(ASPECT_RATIOS_TYPE_MANUAL, "MANUAL ZOOM") \
     X(ASPECT_RATIOS_TYPE_STRECHED, "STRECHED") \
     X(ASPECT_RATIOS_TYPE_CROPPED, "CROPPED") \
-    X(ASPECT_RATIOS_TYPE_SCALED, "SCALED") \
     X(NB_ASPECT_RATIOS_TYPES, "")
 
 ////------ Enumeration of the different aspect ratios ------
@@ -192,15 +190,15 @@ typedef enum {RESUME_OPTIONS} ENUM_RESUME_OPTIONS;
 ////------ Defines to be shared -------
 #define STEP_CHANGE_VOLUME          10
 #define STEP_CHANGE_BRIGHTNESS      10
-#define NOTIF_SECONDS_DISP			2
+#define NOTIF_SECONDS_DISP			    2
 
 ////------ Menu commands -------
-#define SHELL_CMD_VOLUME_GET        	"volume_get"
-#define SHELL_CMD_VOLUME_SET        	"volume_set"
-#define SHELL_CMD_BRIGHTNESS_GET    	"brightness_get"
-#define SHELL_CMD_BRIGHTNESS_SET    	"brightness_set"
-#define SHELL_CMD_POWERDOWN         	"shutdown_funkey"
-#define SHELL_CMD_NOTIF					      "notif_set"
+#define SHELL_CMD_VOLUME_GET        	  "volume_get"
+#define SHELL_CMD_VOLUME_SET        	  "volume_set"
+#define SHELL_CMD_BRIGHTNESS_GET    	  "brightness_get"
+#define SHELL_CMD_BRIGHTNESS_SET    	  "brightness_set"
+#define SHELL_CMD_POWERDOWN         	  "shutdown_funkey"
+#define SHELL_CMD_NOTIF					        "notif_set"
 #define SHELL_CMD_WRITE_QUICK_LOAD_CMD	"write_args_quick_load_file"
 
 ////------ Global variables -------

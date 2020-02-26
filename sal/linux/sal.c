@@ -57,12 +57,12 @@ static u32 sal_Input(int held)
 		return 0;
 	}
 
-	Uint8 type = (event.key.state == SDL_PRESSED);
-
 	if(event.type == SDL_QUIT){
 		printf("\nWhat? How dare you interrupt me ?\n");
 		mExit = 1;
 	}
+
+	Uint8 type = (event.key.state == SDL_PRESSED);
 
 	switch(event.key.keysym.sym) {
 		CASE(a, A);
@@ -78,6 +78,7 @@ static u32 sal_Input(int held)
 		CASE(l, LEFT);
 		CASE(r, RIGHT);
 		CASE(q, MENU);
+		CASE(h, ASPECT_RATIO);
 		//CASE(e, EXIT);
 		default: break;
 	}
@@ -517,6 +518,20 @@ void sal_VideoFlip(s32 vsync)
 	//SDL_Flip(hw_screen);
 }
 
+void sal_VideoLock()
+{
+	if (SDL_MUSTLOCK(hw_screen)) {
+		SDL_LockSurface(hw_screen);
+	}
+}
+
+void sal_VideoUnlock()
+{
+	if (SDL_MUSTLOCK(hw_screen)) {
+		SDL_UnlockSurface(hw_screen);
+	}
+}
+
 
 
 /*void sal_VideoRotateAndFlip(uint32_t fps){
@@ -719,7 +734,7 @@ void flip_Upscaling_Bilinear(uint16_t *src_screen, uint16_t *dst_screen,
 
 
 /// Interpolation with left, right pixels, pseudo gaussian weighting for downscaling
-void flip_Downscale_LeftRightUpDownGaussianFilter_Optimized4(uint16_t *src_screen, uint16_t *dst_screen,
+void flip_Downscale_LeftRightGaussianFilter(uint16_t *src_screen, uint16_t *dst_screen,
 								int src_w, int src_h, int dst_w, int dst_h){
   int w1=src_w;
   int h1=src_h;
@@ -730,12 +745,124 @@ void flip_Downscale_LeftRightUpDownGaussianFilter_Optimized4(uint16_t *src_scree
   int y_padding = (RES_HW_SCREEN_VERTICAL-dst_h)/2;
   int x1, y1;
 
-#ifdef BLACKER_BLACKS
-      /// Optimization for blacker blacks (our screen do not handle green value of 1 very well)
-      uint16_t green_mask = 0x07C0;
-#else
-      uint16_t green_mask = 0x07E0;
-#endif
+  /// --- Compute padding for centering when out of bounds ---
+  int x_padding = 0;
+  if(w2>RES_HW_SCREEN_HORIZONTAL){
+    x_padding = (w2-RES_HW_SCREEN_HORIZONTAL)/2 + 1;
+  }
+  int x_padding_ratio = x_padding*w1/w2;
+
+  /// --- Interp params ---
+  int px_diff_prev_x = 0;
+  int px_diff_next_x = 0;
+  uint32_t ponderation_factor;
+  uint8_t left_px_missing, right_px_missing;
+
+  uint16_t * cur_p;
+  uint16_t * cur_p_left;
+  uint16_t * cur_p_right;
+  uint32_t red_comp, green_comp, blue_comp;
+
+
+  for (int i=0;i<h2;i++)
+  {
+    if(i>=RES_HW_SCREEN_VERTICAL){
+      continue;
+    }
+    uint16_t* t = (uint16_t*)(dst_screen +
+	(i+y_padding)*((w2>RES_HW_SCREEN_HORIZONTAL)?RES_HW_SCREEN_HORIZONTAL:w2) );
+    // ------ current and next y value ------
+    y1 = ((i*y_ratio)>>16);
+    uint16_t* p = (uint16_t*)(src_screen + (y1*w1+x_padding_ratio) );
+    int rat = 0;
+    for (int j=0;j<w2;j++)
+    {
+      if(j>=RES_HW_SCREEN_HORIZONTAL){
+        continue;
+      }
+
+      // ------ current x value ------
+      x1 = (rat>>16);
+      px_diff_next_x = ((rat+x_ratio)>>16) - x1;
+
+      // ------ adapted bilinear with 3x3 gaussian blur -------
+      cur_p = p+x1;
+      if(px_diff_prev_x > 1 || px_diff_next_x > 1 ){
+        red_comp=((*cur_p)&0xF800) << 1;
+        green_comp=((*cur_p)&0x07E0) << 1;
+        blue_comp=((*cur_p)&0x001F) << 1;
+
+        left_px_missing = (px_diff_prev_x > 1 && x1>0);
+        right_px_missing = (px_diff_next_x > 1 && x1+1<w1);
+        ponderation_factor = 2 + left_px_missing + right_px_missing;
+
+        // ---- Interpolate current and left ----
+        if(left_px_missing){
+	    cur_p_left = p+x1-1;
+            red_comp += ((*cur_p_left)&0xF800);
+            green_comp += ((*cur_p_left)&0x07E0);
+            blue_comp += ((*cur_p_left)&0x001F);
+        }
+
+        // ---- Interpolate current and right ----
+        if(right_px_missing){
+	    cur_p_right = p+x1+1;
+            red_comp += ((*cur_p_right)&0xF800);
+            green_comp += ((*cur_p_right)&0x07E0);
+            blue_comp += ((*cur_p_right)&0x001F);
+        }
+
+        /// --- Compute new px value ---
+        if(ponderation_factor==4){
+		red_comp = (red_comp >> 2)&0xF800;
+		green_comp = (green_comp >> 2)&0x07C0;
+		blue_comp = (blue_comp >> 2)&0x001F;
+        }
+        else if(ponderation_factor==2){
+		red_comp = (red_comp >> 1)&0xF800;
+		green_comp = (green_comp >> 1)&0x07C0;
+		blue_comp = (blue_comp >> 1)&0x001F;
+        }
+        else{
+		red_comp = (red_comp / ponderation_factor )&0xF800;
+		green_comp = (green_comp / ponderation_factor )&0x07C0;
+		blue_comp = (blue_comp / ponderation_factor )&0x001F;
+        }
+
+        /// --- write pixel ---
+        *t++ = red_comp+green_comp+blue_comp;
+      }
+      else{
+        /// --- copy pixel ---
+        *t++ = (*cur_p);
+
+        /// Debug
+        //occurence_pond[1] += 1;
+      }
+
+      /// save number of pixels to interpolate
+      px_diff_prev_x = px_diff_next_x;
+
+      // ------ next pixel ------
+      rat += x_ratio;
+    }
+  }
+}
+
+
+
+
+/// Interpolation with left, right pixels, pseudo gaussian weighting for downscaling
+void flip_Downscale_LeftRightUpDownGaussianFilter_Optimized4(uint16_t *src_screen, uint16_t *dst_screen,
+								int src_w, int src_h, int dst_w, int dst_h){
+  int w1=src_w;
+  int h1=src_h;
+  int w2=dst_w;
+  int h2=dst_h;
+  int x_ratio = (int)((w1<<16)/w2);
+  int y_ratio = (int)((h1<<16)/h2);
+  int y_padding = (RES_HW_SCREEN_VERTICAL-dst_h)/2;
+  int x1, y1;
 
   /// --- Compute padding for centering when out of bounds ---
   int x_padding = 0;
@@ -831,17 +958,17 @@ void flip_Downscale_LeftRightUpDownGaussianFilter_Optimized4(uint16_t *src_scree
         /// --- Compute new px value ---
         if(ponderation_factor==4){
           red_comp = (red_comp >> 2)&0xF800;
-          green_comp = (green_comp >> 2)&green_mask;
+          green_comp = (green_comp >> 2)&0x07C0;
           blue_comp = (blue_comp >> 2)&0x001F;
         }
         else if(ponderation_factor==2){
           red_comp = (red_comp >> 1)&0xF800;
-          green_comp = (green_comp >> 1)&green_mask;
+          green_comp = (green_comp >> 1)&0x07C0;
           blue_comp = (blue_comp >> 1)&0x001F;
         }
         else{
           red_comp = (red_comp / ponderation_factor )&0xF800;
-          green_comp = (green_comp / ponderation_factor )&green_mask;
+          green_comp = (green_comp / ponderation_factor )&0x07C0;
           blue_comp = (blue_comp / ponderation_factor )&0x001F;
         }
 
@@ -853,12 +980,7 @@ void flip_Downscale_LeftRightUpDownGaussianFilter_Optimized4(uint16_t *src_scree
       }
       else{
         /// --- copy pixel ---
-#ifdef BLACKER_BLACKS
-        /// Optimization for blacker blacks (our screen do not handle green value of 1 very well)
-        *t++ = (*cur_p)&0xFFDF;
-#else
         *t++ = (*cur_p);
-#endif
 
         /// Debug
         //occurence_pond[1] += 1;
@@ -866,6 +988,124 @@ void flip_Downscale_LeftRightUpDownGaussianFilter_Optimized4(uint16_t *src_scree
 
       /// save number of pixels to interpolate
       px_diff_prev_x = px_diff_next_x;
+
+      // ------ next pixel ------
+      rat += x_ratio;
+    }
+  }
+  /// Debug
+  /*printf("pond: [%d, %d, %d, %d, %d, %d, %d, %d]\n", occurence_pond[1], occurence_pond[2], occurence_pond[3],
+                                              occurence_pond[4], occurence_pond[5], occurence_pond[6],
+                                              occurence_pond[7], occurence_pond[8]);*/
+}
+
+
+
+/// Interpolation with left, right pixels, pseudo gaussian weighting for downscaling
+void flip_Downscale_LeftRightUpDownGaussianFilter_Optimized4Forward(uint16_t *src_screen, uint16_t *dst_screen,
+								int src_w, int src_h, int dst_w, int dst_h){
+  int w1=src_w;
+  int h1=src_h;
+  int w2=dst_w;
+  int h2=dst_h;
+  int x_ratio = (int)((w1<<16)/w2);
+  int y_ratio = (int)((h1<<16)/h2);
+  int y_padding = (RES_HW_SCREEN_VERTICAL-dst_h)/2;
+  int x1, y1;
+
+  /// --- Compute padding for centering when out of bounds ---
+  int x_padding = 0;
+  if(w2>RES_HW_SCREEN_HORIZONTAL){
+    x_padding = (w2-RES_HW_SCREEN_HORIZONTAL)/2 + 1;
+  }
+  int x_padding_ratio = x_padding*w1/w2;
+
+  /// --- Interp params ---
+  int px_diff_next_x = 0;
+  uint32_t ponderation_factor;
+  uint8_t right_px_missing;
+  int supposed_pond_factor;
+
+  uint16_t * cur_p;
+  uint16_t * cur_p_left;
+  uint16_t * cur_p_right;
+  uint32_t red_comp, green_comp, blue_comp;
+  //printf("virtual_screen->w=%d, virtual_screen->w=%d\n", virtual_screen->w, virtual_screen->h);
+
+  ///Debug
+  /*int occurence_pond[9];
+  memset(occurence_pond, 0, 9*sizeof(int));*/
+
+  for (int i=0;i<h2;i++)
+  {
+    if(i>=RES_HW_SCREEN_VERTICAL){
+      continue;
+    }
+    uint16_t* t = (uint16_t*)(dst_screen +
+	(i+y_padding)*((w2>RES_HW_SCREEN_HORIZONTAL)?RES_HW_SCREEN_HORIZONTAL:w2) );
+    // ------ current and next y value ------
+    y1 = ((i*y_ratio)>>16);
+    uint16_t* p = (uint16_t*)(src_screen + (y1*w1+x_padding_ratio) );
+    int rat = 0;
+    for (int j=0;j<w2;j++)
+    {
+      if(j>=RES_HW_SCREEN_HORIZONTAL){
+        continue;
+      }
+      // ------ current x value ------
+      x1 = (rat>>16);
+      px_diff_next_x = ((rat+x_ratio)>>16) - x1;
+
+      // ------ adapted bilinear with 3x3 gaussian blur -------
+      cur_p = p+x1;
+      if(px_diff_next_x > 1 ){
+        red_comp=((*cur_p)&0xF800) << 1;
+        green_comp=((*cur_p)&0x07E0) << 1;
+        blue_comp=((*cur_p)&0x001F) << 1;
+        ponderation_factor = 2;
+        right_px_missing = (px_diff_next_x > 1 && x1+1<w1);
+        supposed_pond_factor = 2 + right_px_missing;
+
+        // ---- Interpolate current and right ----
+        if(right_px_missing){
+		cur_p_right = p+x1+1;
+
+		red_comp += ((*cur_p_right)&0xF800) << 1;
+		green_comp += ((*cur_p_right)&0x07E0) << 1;
+		blue_comp += ((*cur_p_right)&0x001F) << 1;
+		ponderation_factor+=2;
+        }
+
+        /// --- Compute new px value ---
+        if(ponderation_factor==4){
+          red_comp = (red_comp >> 2)&0xF800;
+          green_comp = (green_comp >> 2)&0x07C0;
+          blue_comp = (blue_comp >> 2)&0x001F;
+        }
+        else if(ponderation_factor==2){
+          red_comp = (red_comp >> 1)&0xF800;
+          green_comp = (green_comp >> 1)&0x07C0;
+          blue_comp = (blue_comp >> 1)&0x001F;
+        }
+        else{
+          red_comp = (red_comp / ponderation_factor )&0xF800;
+          green_comp = (green_comp / ponderation_factor )&0x07C0;
+          blue_comp = (blue_comp / ponderation_factor )&0x001F;
+        }
+
+        /// Debug
+        //occurence_pond[ponderation_factor] += 1;
+
+        /// --- write pixel ---
+        *t++ = red_comp+green_comp+blue_comp;
+      }
+      else{
+        /// --- copy pixel ---
+        *t++ = (*cur_p);
+
+        /// Debug
+        //occurence_pond[1] += 1;
+      }
 
       // ------ next pixel ------
       rat += x_ratio;

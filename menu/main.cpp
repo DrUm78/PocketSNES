@@ -183,6 +183,8 @@ bool8_32 S9xDeinitUpdate (int Width, int Height, bool8_32)
 		LastPAL = PAL;
 	}
 
+	sal_VideoUnlock();
+
 #if 0
 	switch (mMenuOptions.fullScreen)
 	{
@@ -226,30 +228,101 @@ bool8_32 S9xDeinitUpdate (int Width, int Height, bool8_32)
 #endif
 
 
+#if 0
+	/* Smooth software scaling */
+	static SDL_Surface *surface_tmp = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 240, 16, 0, 0, 0, 0);
+	if (PAL) {
+		upscale_256x240_to_320x240((uint32_t*) surface_tmp->pixels, (uint32_t*) IntermediateScreen, SNES_WIDTH);
+	} else {
+		upscale_256x224_to_320x240((uint32_t*) surface_tmp->pixels, (uint32_t*) IntermediateScreen, SNES_WIDTH);
+	}
+	//SDL_FreeSurface(surface_tmp);
+#endif
 
+#if 0
+	/* Smooth software scaling */
+	static SDL_Surface *surface_tmp = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 240, 16, 0, 0, 0, 0);
+	if (PAL) {
+		upscale_256x240_to_320x240_bilinearish((uint32_t*) surface_tmp->pixels, (uint32_t*) IntermediateScreen, SNES_WIDTH);
+	} else {
+		upscale_256x224_to_320x240_bilinearish((uint32_t*) surface_tmp->pixels, (uint32_t*) IntermediateScreen, SNES_WIDTH);
+	}
+	//SDL_FreeSurface(surface_tmp);
+#endif
+
+#if 0
 	/// ---- Copy virtual screen to hardware screen depending on aspect ratio ------
 	u32 h = PAL ? SNES_HEIGHT_EXTENDED : SNES_HEIGHT;
 	u32 y, pitch = sal_VideoGetPitch();
 	u16 *src = (u16*) IntermediateScreen;
-	u16 *dst_virtual = (u16*) sal_VirtualVideoGetBuffer();
+	u16 *dst_virtual = (u16*) sal_VideoGetBuffer();
 
 	/// This is a simple pixel copy, it honestly looks the best for SNES than any stretching and scaling
 	// since the resolution is already very close from 240x240
-	/*int off_center_y = ABS(RES_HW_SCREEN_VERTICAL-h)/2*RES_HW_SCREEN_HORIZONTAL; // for centering
+	int off_center_y = ABS(RES_HW_SCREEN_VERTICAL-h)/2*RES_HW_SCREEN_HORIZONTAL; // for centering
 	for (y = 0; y < h; y++){
 		memcpy(dst_virtual + off_center_y + RES_HW_SCREEN_HORIZONTAL*y,
 			src + SNES_WIDTH*y + (SNES_WIDTH-RES_HW_SCREEN_HORIZONTAL)/2,
 			RES_HW_SCREEN_HORIZONTAL * sizeof(u16));
-	}*/
+	}
+#endif
 
-	/*flip_NNOptimized_AllowOutOfScreen(src, dst_virtual,
-		Width, h, Width, RES_HW_SCREEN_VERTICAL);*/
 
-	flip_Downscale_LeftRightUpDownGaussianFilter_Optimized4(src, dst_virtual,
+#if 0
+	/// ---- Copy virtual screen to hardware screen depending on aspect ratio ------
+	u32 h = PAL ? SNES_HEIGHT_EXTENDED : SNES_HEIGHT;
+	u32 y, pitch = sal_VideoGetPitch();
+	u16 *src = (u16*) IntermediateScreen;
+	u16 *dst_virtual = (u16*) sal_VideoGetBuffer();
+
+	flip_Downscale_LeftRightGaussianFilter(src, dst_virtual,
 		Width, h, RES_HW_SCREEN_HORIZONTAL, RES_HW_SCREEN_VERTICAL);
+
+	/*flip_Downscale_LeftRightUpDownGaussianFilter_Optimized4(src, dst_virtual,
+		Width, h, RES_HW_SCREEN_HORIZONTAL, RES_HW_SCREEN_VERTICAL);*/
+
+	/*flip_Downscale_LeftRightUpDownGaussianFilter_Optimized4Forward(src, dst_virtual,
+		Width, h, RES_HW_SCREEN_HORIZONTAL, RES_HW_SCREEN_VERTICAL);*/
 
 	/*flip_Downscale_LeftRightUpDownGaussianFilter_Optimized8(src, dst_virtual,
 		Width, h, RES_HW_SCREEN_HORIZONTAL, RES_HW_SCREEN_VERTICAL);*/
+
+	/*flip_NNOptimized_AllowOutOfScreen(src, dst_virtual,
+		Width, h, RES_HW_SCREEN_HORIZONTAL, RES_HW_SCREEN_VERTICAL);*/
+#endif
+
+#if 1
+	/// ---- Copy virtual screen to hardware screen depending on aspect ratio ------
+	u32 h = PAL ? SNES_HEIGHT_EXTENDED : SNES_HEIGHT;
+	u32 y, pitch = sal_VideoGetPitch();
+	u16 *src = (u16*) IntermediateScreen;
+	u16 *dst_virtual = (u16*) sal_VideoGetBuffer();
+	static int prev_aspect_ratio = ASPECT_RATIOS_TYPE_STRECHED;
+
+	/* Clear screen */
+	if(prev_aspect_ratio != aspect_ratio){
+		memset(dst_virtual, 0, RES_HW_SCREEN_VERTICAL*RES_HW_SCREEN_HORIZONTAL*sizeof(uint16_t));
+		prev_aspect_ratio = aspect_ratio;
+	}
+
+	/* Rescale */
+	if(aspect_ratio == ASPECT_RATIOS_TYPE_CROPPED){
+		/// This is a simple pixel copy, it honestly looks the best for SNES than any stretching and scaling
+		// since the resolution is already very close from 240x240
+		int off_center_y = (ABS(RES_HW_SCREEN_VERTICAL-h)/2+1)*RES_HW_SCREEN_HORIZONTAL; // for centering
+		for (y = 0; y < h; y++){
+			memcpy(dst_virtual + off_center_y + RES_HW_SCREEN_HORIZONTAL*y,
+				src + SNES_WIDTH*y + (SNES_WIDTH-RES_HW_SCREEN_HORIZONTAL)/2,
+				RES_HW_SCREEN_HORIZONTAL * sizeof(u16));
+		}
+	}
+	else{
+		flip_Downscale_LeftRightGaussianFilter(src, dst_virtual,
+			Width, h, RES_HW_SCREEN_HORIZONTAL, RES_HW_SCREEN_VERTICAL);
+	}
+
+
+#endif
 
 
 	/// ----- HUD info: FPS -----
@@ -285,10 +358,9 @@ bool8_32 S9xDeinitUpdate (int Width, int Height, bool8_32)
 		sal_VideoPrint(200,0,mQuickStateDisplay,SAL_RGB(31,31,31));
 	}
 
-	/// Now Rotate and Flip onto hw screen
-	SDL_Rotate_270_StandardSurfaces();
-
 	sal_VideoFlip(0);
+
+	sal_VideoLock();
 }
 
 const char *S9xGetFilename (const char *ex)
@@ -308,6 +380,7 @@ const char *S9xGetFilename (const char *ex)
 uint32 S9xReadJoypad (int which1)
 {
 	uint32 val=0x80000000;
+	static int ar_held = false; //for aspect ratio not to be subject to this "held" way of functionning
 	if (mInMenu) return val;
 	if (which1 != 0) return val;
 
@@ -318,6 +391,25 @@ uint32 S9xReadJoypad (int which1)
 		//printf("launching menu\n");
 		mEnterMenu = 1;
 		return val;
+	}
+	else if (joy & SAL_INPUT_ASPECT_RATIO && !ar_held)
+	{
+		ar_held = 1;
+		aspect_ratio = (aspect_ratio+1)%NB_ASPECT_RATIOS_TYPES;
+
+		char shell_cmd[100];
+		FILE *fp;
+        sprintf(shell_cmd, "%s %d \"     DISPLAY MODE: %s\"",
+				SHELL_CMD_NOTIF, NOTIF_SECONDS_DISP, aspect_ratio_name[aspect_ratio]);
+        fp = popen(shell_cmd, "r");
+        if (fp == NULL) {
+		printf("Failed to run command %s\n", shell_cmd);
+		}
+		return val;
+	}
+	else if ( !(joy & SAL_INPUT_ASPECT_RATIO) && ar_held)
+	{
+		ar_held = false;
 	}
 	else if(joy & SAL_INPUT_EXIT){
 		printf("EXIT !!!\n");
