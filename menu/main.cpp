@@ -594,6 +594,13 @@ void quick_save_and_poweroff()
     char shell_cmd[200+SAL_MAX_PATH];
     FILE *fp;
 
+    /* Send command to kill any previously scheduled shutdown */
+    sprintf(shell_cmd, "pkill %s", SHELL_CMD_SCHEDULE_POWERDOWN);
+    fp = popen(shell_cmd, "r");
+    if (fp == NULL) {
+	printf("Failed to run command %s\n", shell_cmd);
+    }
+
     /* Save  */
     if(!SaveStateFile((s8 *)quick_save_file)){
 	printf("Save failed");
