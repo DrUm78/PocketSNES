@@ -26,10 +26,10 @@
 static struct MENU_OPTIONS mMenuOptions;
 static int mEmuScreenHeight;
 static int mEmuScreenWidth;
-char mRomName[SAL_MAX_PATH]={""};
-char mRomPath[SAL_MAX_PATH];
+char *mRomName = NULL;
+char *mRomPath = NULL;
 static char *quick_save_file_extension = "quicksave";
-char quick_save_file[SAL_MAX_PATH]={""};
+char *quick_save_file = NULL;
 static u32 mLastRate=0;
 
 static s8 mFpsDisplay[16]={""};
@@ -704,15 +704,15 @@ int Run(int sound)
 		}
 		else{
 			printf("Reset game\n");
-		}
-	}
 
-	/* Remove quicksave file if present */
-	if (remove(quick_save_file) == 0){
-	printf("Deleted successfully: %s\n", quick_save_file);
-	}
-	else{
-	printf("Unable to delete the file: %s\n", quick_save_file);
+			/* Remove quicksave file if present */
+			if (remove(quick_save_file) == 0){
+			printf("Deleted successfully: %s\n", quick_save_file);
+			}
+			else{
+			printf("Unable to delete the file: %s\n", quick_save_file);
+			}
+		}
 	}
 
 	while(!mExit)
@@ -981,11 +981,12 @@ void parse_cmd_line(int argc, char *argv[])
 		}
 		/* Check if file exists, Save ROM name, and ROM path */
 		else {
-			strcpy(mRomName, argv[x]);
+			mRomName = argv[x];
 			FILE *f = fopen(mRomName, "rb");
 			if (f) {
+
 				/* Save Rom path */
-				strcpy(mRomPath, mRomName);
+				mRomPath = strdup(mRomName);
 				char *slash = strrchr ((char*)mRomPath, '/');
 				*slash = 0;
 
@@ -994,9 +995,10 @@ void parse_cmd_line(int argc, char *argv[])
 				*point = 0;
 
 				/* Set quicksave filename */
+				quick_save_file = (char*) malloc(strlen(mRomPath) + strlen(slash+1) + strlen(quick_save_file_extension) + 2 + 1);
 				sprintf(quick_save_file, "%s/%s.%s",
 					mRomPath, slash+1, quick_save_file_extension);
-				printf("************ quick_save_file: %s\n", quick_save_file);
+				//printf("************ quick_save_file: %s\n", quick_save_file);
 
 				fclose(f);
 			}
@@ -1033,6 +1035,9 @@ int mainEntry(int argc, char* argv[])
 	if (argc >= 2){
 		parse_cmd_line(argc, argv);
 	}
+
+    /* Set env var for no mouse */
+    putenv(strdup("SDL_NOMOUSE=1"));
 
 	/* Init Video */
 	sal_Init();
@@ -1076,7 +1081,7 @@ int mainEntry(int argc, char* argv[])
 			else
 			{
 				event=EVENT_RUN_ROM;
-		  	}
+			}
 		}
 
 		if(event==EVENT_RESET_ROM)

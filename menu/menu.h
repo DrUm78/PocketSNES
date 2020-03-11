@@ -190,7 +190,7 @@ typedef enum {RESUME_OPTIONS} ENUM_RESUME_OPTIONS;
 ////------ Defines to be shared -------
 #define STEP_CHANGE_VOLUME          10
 #define STEP_CHANGE_BRIGHTNESS      10
-#define NOTIF_SECONDS_DISP			    2
+#define NOTIF_SECONDS_DISP			2
 
 ////------ Menu commands -------
 #define SHELL_CMD_VOLUME_GET        	  	"volume_get"
@@ -216,9 +216,9 @@ extern struct SAVE_STATE mSaveState[10];
 extern s8 mSaveStateName[SAL_MAX_PATH];
 //extern s8 mRomName[SAL_MAX_PATH];
 extern s8 mSystemDir[SAL_MAX_PATH];
-extern char mRomName[SAL_MAX_PATH];
-extern char mRomPath[SAL_MAX_PATH];
-extern char quick_save_file[SAL_MAX_PATH];
+extern char *mRomName;
+extern char *mRomPath;
+extern char *quick_save_file;
 
 //####################################
 //# Functions

@@ -649,7 +649,7 @@ void run_menu_loop()
     /*if(SDL_BlitSurface(virtual_hw_screen, NULL, backup_hw_screen, NULL)){
         MENU_ERROR_PRINTF("ERROR Could not copy virtual_hw_screen: %s\n", SDL_GetError());
     }*/
-    uint16_t *dst_virtual = (uint16_t*) sal_VirtualVideoGetBuffer();
+    uint16_t *dst_virtual = (uint16_t*) sal_VideoGetBuffer();
 	memcpy(backup_hw_screen->pixels, dst_virtual,
 			RES_HW_SCREEN_HORIZONTAL * RES_HW_SCREEN_VERTICAL * sizeof(u16));
 
