@@ -2573,6 +2573,7 @@ void MenuInit(const char *systemDir, struct MENU_OPTIONS *menuOptions, char *rom
 
 	//strcpy(mSystemDir,systemDir);
     strcpy(mSystemDir,mRomPath);
+    //printf("******* %s\n", mSystemDir);
 	mMenuOptions=menuOptions;
 
 	if(LoadMenuOptions(mSystemDir, DEFAULT_ROM_DIR_FILENAME, DEFAULT_ROM_DIR_EXT, mRomDir, SAL_MAX_PATH, 0)!=SAL_OK)

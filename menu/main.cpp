@@ -986,7 +986,8 @@ void parse_cmd_line(int argc, char *argv[])
 			if (f) {
 
 				/* Save Rom path */
-				mRomPath = strdup(mRomName);
+				mRomPath = (char*)malloc(strlen(mRomName)+1);
+				strcpy(mRomPath, mRomName);
 				char *slash = strrchr ((char*)mRomPath, '/');
 				*slash = 0;
 
@@ -998,7 +999,9 @@ void parse_cmd_line(int argc, char *argv[])
 				quick_save_file = (char*) malloc(strlen(mRomPath) + strlen(slash+1) + strlen(quick_save_file_extension) + 2 + 1);
 				sprintf(quick_save_file, "%s/%s.%s",
 					mRomPath, slash+1, quick_save_file_extension);
-				//printf("************ quick_save_file: %s\n", quick_save_file);
+				/*printf("************ quick_save_file: %s\n", quick_save_file);
+				printf("************ mRomPath: %s\n", mRomPath);
+				printf("************ mRomName: %s\n", mRomName);*/
 
 				fclose(f);
 			}
@@ -1031,7 +1034,6 @@ int mainEntry(int argc, char* argv[])
 	signal(SIGUSR1, handle_sigusr1);
 
 	/* Parse arguments */
-	mRomName[0]=0;
 	if (argc >= 2){
 		parse_cmd_line(argc, argv);
 	}
