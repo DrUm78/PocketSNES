@@ -165,6 +165,14 @@ void flip_Downscale_LeftRightUpDownGaussianFilter_Optimized4Forward(uint16_t *sr
 								int src_w, int src_h, int dst_w, int dst_h);
 void flip_Downscale_LeftRightUpDownGaussianFilter_Optimized8(uint16_t *src_screen, uint16_t *dst_screen,
 								int src_w, int src_h, int dst_w, int dst_h);
+void flip_Downscale_LeftRightGaussianFilter_Optimized(uint16_t *src_screen, uint16_t *dst_screen,
+								int src_w, int src_h, int dst_w, int dst_h);
+void flip_Downscale_LeftRightGaussianFilter_Optimized_mergeUpDown(uint16_t *src_screen, uint16_t *dst_screen,
+								int src_w, int src_h, int dst_w, int dst_h);
+void flip_optimizedWidth_256to240_mergeUpDown(uint16_t *src_screen, uint16_t *dst_screen,
+								int src_w, int src_h, int dst_w, int dst_h);
+void flip_optimizedWidth_256to240(uint16_t *src_screen, uint16_t *dst_screen,
+								int src_w, int src_h, int dst_w, int dst_h);
 /*void SDL_Copy_Rotate_270(uint16_t *src_screen, uint16_t *dst_screen,
 								int src_w, int src_h, int dst_w, int dst_h);*/
 void SDL_Rotate_270(SDL_Surface * src_surface, SDL_Surface * dst_surface);
