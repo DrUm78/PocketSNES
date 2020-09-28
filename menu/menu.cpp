@@ -140,7 +140,7 @@ int aspect_ratio_factor_step = 10;
 #define X(a, b) b,
 const char *resume_options_str[] = {RESUME_OPTIONS};
 
-int quick_load_slot_chosen = 0;
+static int quick_load_slot_chosen = 0;
 int savestate_slot = 0;
 extern u32 mExit;
 
