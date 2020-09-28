@@ -297,7 +297,7 @@ bool8_32 S9xDeinitUpdate (int Width, int Height, bool8_32)
 	u32 y, pitch = sal_VideoGetPitch();
 	u16 *src = (u16*) IntermediateScreen;
 	u16 *dst_virtual = (u16*) sal_VideoGetBuffer();
-	static int prev_aspect_ratio = ASPECT_RATIOS_TYPE_STRECHED;
+	static int prev_aspect_ratio = ASPECT_RATIOS_TYPE_STRETCHED;
 
 	/* Clear screen */
 	if(prev_aspect_ratio != aspect_ratio){

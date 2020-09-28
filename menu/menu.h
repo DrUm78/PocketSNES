@@ -167,7 +167,7 @@ typedef enum{
 
 ///------ Definition of the different aspect ratios
 #define ASPECT_RATIOS \
-    X(ASPECT_RATIOS_TYPE_STRECHED, "STRECHED") \
+    X(ASPECT_RATIOS_TYPE_STRETCHED, "STRETCHED") \
     X(ASPECT_RATIOS_TYPE_CROPPED, "CROPPED") \
     X(NB_ASPECT_RATIOS_TYPES, "")
 
