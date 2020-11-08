@@ -347,14 +347,14 @@ u32 sal_VideoInit(u32 bpp)
 	//SDL_WM_SetCaption("Game", NULL);
 
     // lock surface if needed
-	if (SDL_MUSTLOCK(hw_screen))
+	/*if (SDL_MUSTLOCK(hw_screen))
 	{
 		if (SDL_LockSurface(hw_screen) < 0)
 		{
 			sal_LastErrorSet("unable to lock surface");
 			return SAL_ERROR;
 		}
-	}
+	}*/
 
 	return SAL_OK;
 }
@@ -534,13 +534,15 @@ void SDL_Rotate_270_StandardSurfaces(){
 
 void sal_VideoFlip(s32 vsync)
 {
-	if (SDL_MUSTLOCK(hw_screen)) {
+	/*if (SDL_MUSTLOCK(hw_screen)) {
 		SDL_UnlockSurface(hw_screen);
 		SDL_Flip(hw_screen);
 		SDL_LockSurface(hw_screen);
 	} else{
 		SDL_Flip(hw_screen);
-	}
+	}*/
+
+	SDL_Flip(hw_screen);
 
 	/*if(SDL_GetVideoSurface()->flags & SDL_HWSURFACE ){
 	printf("hard\n");
@@ -554,16 +556,16 @@ void sal_VideoFlip(s32 vsync)
 
 void sal_VideoLock()
 {
-	if (SDL_MUSTLOCK(hw_screen)) {
+	/*if (SDL_MUSTLOCK(hw_screen)) {
 		SDL_LockSurface(hw_screen);
-	}
+	}*/
 }
 
 void sal_VideoUnlock()
 {
-	if (SDL_MUSTLOCK(hw_screen)) {
+	/*if (SDL_MUSTLOCK(hw_screen)) {
 		SDL_UnlockSurface(hw_screen);
-	}
+	}*/
 }
 
 
