@@ -591,41 +591,45 @@ void S9xLoadSRAM (void)
 /* Quick save and turn off the console */
 void quick_save_and_poweroff()
 {
-    /* Vars */
-    char shell_cmd[200+SAL_MAX_PATH];
-    FILE *fp;
+	/* Vars */
+	char shell_cmd[200+SAL_MAX_PATH];
+	FILE *fp;
 
-    /* Send command to kill any previously scheduled shutdown */
-    sprintf(shell_cmd, "pkill %s", SHELL_CMD_SCHEDULE_POWERDOWN);
-    fp = popen(shell_cmd, "r");
-    if (fp == NULL) {
-	printf("Failed to run command %s\n", shell_cmd);
-    }
+	/* Send command to kill any previously scheduled shutdown */
+	sprintf(shell_cmd, "pkill %s", SHELL_CMD_SCHEDULE_POWERDOWN);
+	fp = popen(shell_cmd, "r");
+	if (fp == NULL)
+	{
+		printf("Failed to run command %s\n", shell_cmd);
+	}
 
-    /* Save  */
-    if(!SaveStateFile((s8 *)quick_save_file)){
-	printf("Save failed");
-	return;
-    }
+	/* Save  */
+	if(!SaveStateFile((s8 *)quick_save_file))
+	{
+		printf("Save failed");
+		return;
+	}
 
-    /* Write quick load file */
-    sprintf(shell_cmd, "%s SDL_NOMOUSE=1 \"%s\" -loadStateFile \"%s\" \"%s\"",
-	SHELL_CMD_WRITE_QUICK_LOAD_CMD, prog_name, quick_save_file, mRomName);
-    printf("Cmd write quick load file:\n	%s\n", shell_cmd);
-    fp = popen(shell_cmd, "r");
-    if (fp == NULL) {
-	printf("Failed to run command %s\n", shell_cmd);
-    }
+	/* Write quick load file */
+	sprintf(shell_cmd, "%s SDL_NOMOUSE=1 \"%s\" -loadStateFile \"%s\" \"%s\"",
+		SHELL_CMD_WRITE_QUICK_LOAD_CMD, prog_name, quick_save_file, mRomName);
+	printf("Cmd write quick load file:\n	%s\n", shell_cmd);
+	fp = popen(shell_cmd, "r");
+	if (fp == NULL)
+	{
+		printf("Failed to run command %s\n", shell_cmd);
+	}
 
-    /* Clean Poweroff */
-    sprintf(shell_cmd, "%s", SHELL_CMD_POWERDOWN);
-    fp = popen(shell_cmd, "r");
-    if (fp == NULL) {
-	printf("Failed to run command %s\n", shell_cmd);
-    }
+	/* Clean Poweroff */
+	sprintf(shell_cmd, "%s", SHELL_CMD_POWERDOWN);
+	fp = popen(shell_cmd, "r");
+	if (fp == NULL)
+	{
+		printf("Failed to run command %s\n", shell_cmd);
+	}
 
-    /* Exit Emulator */
-    mExit = 1;
+	/* Exit Emulator */
+	mExit = 1;
 }
 
 static u32 LastAudioRate = 0;
@@ -681,37 +685,41 @@ int Run(int sound)
 	sal_AudioResume();
 
 	/* Load slot */
-	if(load_state_slot != -1){
+	if(load_state_slot != -1)
+	{
 		printf("LOADING FROM SLOT %d...\n", load_state_slot+1);
 		LoadStateFile(mSaveState[load_state_slot].fullFilename);
 		printf("LOADED FROM SLOT %d\n", load_state_slot+1);
 		load_state_slot = -1;
 	}
 	/* Load file */
-	else if(load_state_file != NULL){
+	else if(load_state_file != NULL)
+	{
 		printf("LOADING FROM FILE %s...\n", load_state_file);
 		LoadStateFile(load_state_file);
 		printf("LOADED FROM SLOT %s\n", load_state_file);
 		load_state_file = NULL;
 	}
 	/* Load quick save file */
-	else if(access( quick_save_file, F_OK ) != -1){
+	else if(access( quick_save_file, F_OK ) != -1)
+	{
 		printf("Found quick save file: %s\n", quick_save_file);
 
 		int resume = launch_resume_menu_loop();
-		if(resume == RESUME_YES){
+		if(resume == RESUME_YES)
+		{
 			printf("Resume game from quick save file: %s\n", quick_save_file);
 			LoadStateFile(quick_save_file);
 		}
-		else{
+		else {
 			printf("Reset game\n");
 
 			/* Remove quicksave file if present */
 			if (remove(quick_save_file) == 0){
-			printf("Deleted successfully: %s\n", quick_save_file);
+				printf("Deleted successfully: %s\n", quick_save_file);
 			}
-			else{
-			printf("Unable to delete the file: %s\n", quick_save_file);
+			else {
+				printf("Unable to delete the file: %s\n", quick_save_file);
 			}
 		}
 	}
@@ -727,14 +735,16 @@ int Run(int sound)
 		so.err_counter = 0;
 
 		/// Menu
-		if(mEnterMenu && !mQuickSaveAndPoweroff){
+		if(mEnterMenu && !mQuickSaveAndPoweroff)
+		{
 			run_menu_loop();
 			mEnterMenu = 0;
 			sal_force_no_menu_detection();
 		}
 
 		// Quick save and poweroff
-		if(mQuickSaveAndPoweroff){
+		if(mQuickSaveAndPoweroff)
+		{
 			quick_save_and_poweroff();
 			mQuickSaveAndPoweroff = 0;
 		}
@@ -943,13 +953,13 @@ extern "C"
 /* Handler for SIGUSR1, caused by closing the console */
 void handle_sigusr1(int sig)
 {
-    //printf("Caught signal USR1 %d\n", sig);
+	//printf("Caught signal USR1 %d\n", sig);
 
-    /* Exit menu if it was launched */
-    stop_menu_loop = 1;
+	/* Exit menu if it was launched */
+    	stop_menu_loop = 1;
 
-    /* Signal to quick save and poweoff after next loop */
-    mQuickSaveAndPoweroff = 1;
+	/* Signal to quick save and poweoff after next loop */
+	mQuickSaveAndPoweroff = 1;
 }
 
 void parse_cmd_line(int argc, char *argv[])
@@ -966,10 +976,16 @@ void parse_cmd_line(int argc, char *argv[])
 		{
 			if (strcasecmp(argv[x], "-loadStateSlot") == 0)
 			{
-				if (x+1 < argc) { ++x; load_state_slot = atoi(argv[x]); }
+				if (x+1 < argc)
+				{
+					++x; load_state_slot = atoi(argv[x]);
+				}
 			}
 			else if (strcasecmp(argv[x], "-loadStateFile") == 0) {
-				if (x+1 < argc) { ++x; load_state_file = argv[x]; }
+				if (x+1 < argc)
+				{
+					++x; load_state_file = argv[x];
+				}
 			}
 			else if (strcasecmp(argv[x], "-fps") == 0) {
 
@@ -984,7 +1000,8 @@ void parse_cmd_line(int argc, char *argv[])
 		else {
 			mRomName = argv[x];
 			FILE *f = fopen(mRomName, "rb");
-			if (f) {
+			if (f)
+			{
 
 				/* Save Rom path */
 				mRomPath = (char*)malloc(strlen(mRomName)+1);
@@ -1006,7 +1023,7 @@ void parse_cmd_line(int argc, char *argv[])
 
 				fclose(f);
 			}
-			else{
+			else {
 				printf("Rom %s not found \n", mRomName);
 				unrecognized = 1;
 			}
@@ -1014,7 +1031,8 @@ void parse_cmd_line(int argc, char *argv[])
 		}
 	}
 
-	if (unrecognized) {
+	if (unrecognized)
+	{
 		printf("\n\n\nPocketSNES \n");
 		printf("usage: %s [options] [romfile]\n", argv[0]);
 		printf("options:\n"
@@ -1039,8 +1057,8 @@ int mainEntry(int argc, char* argv[])
 		parse_cmd_line(argc, argv);
 	}
 
-    /* Set env var for no mouse */
-    putenv(strdup("SDL_NOMOUSE=1"));
+	/* Set env var for no mouse */
+	putenv(strdup("SDL_NOMOUSE=1"));
 
 	/* Init Video */
 	sal_Init();
@@ -1079,7 +1097,7 @@ int mainEntry(int argc, char* argv[])
 				printf("Failed to load ROM %s\n",mRomName);
 				mRomName[0] = 0;
 				sal_Reset();
-			return 0;
+				return 0;
 			}
 			else
 			{
@@ -1128,9 +1146,3 @@ int mainEntry(int argc, char* argv[])
 }
 
 }
-
-
-
-
-
-

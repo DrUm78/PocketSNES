@@ -144,15 +144,6 @@ struct SAVE_STATE
   u32 inUse;
 };
 
-
-
-
-
-
-
-
-
-
 typedef enum{
     MENU_TYPE_VOLUME,
     MENU_TYPE_BRIGHTNESS,

@@ -196,7 +196,8 @@ static u32 sal_Input(int held)
 
 static int key_repeat_enabled = 1;
 
-void sal_force_no_menu_detection(){
+void sal_force_no_menu_detection()
+{
 	inputHeld &= ~(SAL_INPUT_MENU);
 	//inputHeld |= 0 << SAL_INPUT_INDEX_MENU;
 }
@@ -267,8 +268,8 @@ s32 sal_Init(void)
 
 	if(TTF_Init())
 	{
-        fprintf(stderr, "Error TTF_Init: %s\n", TTF_GetError());
-        exit(EXIT_FAILURE);
+        	fprintf(stderr, "Error TTF_Init: %s\n", TTF_GetError());
+		exit(EXIT_FAILURE);
 	}
 
 	sal_TimerInit(60);
@@ -302,7 +303,7 @@ u32 sal_VideoInit(u32 bpp)
 
 
 	/* Open the file for reading and writing */
-    /*fbfd = open("/dev/fb0", O_RDWR);
+	/*fbfd = open("/dev/fb0", O_RDWR);
 	if (!fbfd) {
                 printf("Error: cannot open framebuffer device.\n");
                 exit(1);
@@ -317,14 +318,15 @@ u32 sal_VideoInit(u32 bpp)
                                 16, SDL_HWSURFACE);*/
 	hw_screen = SDL_SetVideoMode(RES_HW_SCREEN_HORIZONTAL, RES_HW_SCREEN_VERTICAL,
                                 16, SDL_HWSURFACE | SDL_DOUBLEBUF);
-    //If there was an error in setting up the screen
-    if( hw_screen == NULL )
-    {
+	//If there was an error in setting up the screen
+	if( hw_screen == NULL )
+	{
 		sal_LastErrorSet("SDL_SetVideoMode failed");
 		return SAL_ERROR;
-    }
+	}
 
-	if(SDL_GetVideoSurface()->flags & SDL_HWSURFACE ){
+	if(SDL_GetVideoSurface()->flags & SDL_HWSURFACE )
+	{
 		printf("hard\n");
 	}
 	else{
@@ -333,20 +335,20 @@ u32 sal_VideoInit(u32 bpp)
 
 
 
-    virtual_hw_screen = SDL_CreateRGBSurface(SDL_SWSURFACE,
-	RES_HW_SCREEN_HORIZONTAL, RES_HW_SCREEN_VERTICAL, 16, 0xFFFF, 0xFFFF, 0xFFFF, 0);
-    if( virtual_hw_screen == NULL )
-    {
+	virtual_hw_screen = SDL_CreateRGBSurface(SDL_SWSURFACE,
+						 RES_HW_SCREEN_HORIZONTAL, RES_HW_SCREEN_VERTICAL, 16, 0xFFFF, 0xFFFF, 0xFFFF, 0);
+	if(virtual_hw_screen == NULL)
+	{
 		sal_LastErrorSet("Vound not create virtual_hw_screen");
 		return SAL_ERROR;
-    }
+	}
 
 	SDL_ShowCursor(0);
 
 	// Set window name
 	//SDL_WM_SetCaption("Game", NULL);
 
-    // lock surface if needed
+	// lock surface if needed
 	/*if (SDL_MUSTLOCK(hw_screen))
 	{
 		if (SDL_LockSurface(hw_screen) < 0)
@@ -534,7 +536,8 @@ void SDL_Rotate_270_StandardSurfaces(){
 
 void sal_VideoFlip(s32 vsync)
 {
-	/*if (SDL_MUSTLOCK(hw_screen)) {
+	/*if (SDL_MUSTLOCK(hw_screen))
+	{
 		SDL_UnlockSurface(hw_screen);
 		SDL_Flip(hw_screen);
 		SDL_LockSurface(hw_screen);
@@ -544,11 +547,12 @@ void sal_VideoFlip(s32 vsync)
 
 	SDL_Flip(hw_screen);
 
-	/*if(SDL_GetVideoSurface()->flags & SDL_HWSURFACE ){
-	printf("hard\n");
+	/*if(SDL_GetVideoSurface()->flags & SDL_HWSURFACE)
+	{
+		printf("hard\n");
 	}
 	else{
-	printf("soft\n");
+		printf("soft\n");
 	}*/
 
 	//SDL_Flip(hw_screen);
@@ -556,25 +560,29 @@ void sal_VideoFlip(s32 vsync)
 
 void sal_VideoLock()
 {
-	/*if (SDL_MUSTLOCK(hw_screen)) {
+	/*if (SDL_MUSTLOCK(hw_screen))
+	{
 		SDL_LockSurface(hw_screen);
 	}*/
 }
 
 void sal_VideoUnlock()
 {
-	/*if (SDL_MUSTLOCK(hw_screen)) {
+	/*if (SDL_MUSTLOCK(hw_screen))
+	{
 		SDL_UnlockSurface(hw_screen);
 	}*/
 }
 
 
 
-/*void sal_VideoRotateAndFlip(uint32_t fps){
+/*void sal_VideoRotateAndFlip(uint32_t fps)
+{
 	if (!fps) fps=25;
 
 	static int prev_time = 0;
-	if(SDL_GetTicks() - prev_time < 1000/fps){
+	if(SDL_GetTicks() - prev_time < 1000/fps)
+	{
 		return;
 	}
 	prev_time = SDL_GetTicks();

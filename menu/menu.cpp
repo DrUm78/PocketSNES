@@ -1202,164 +1202,6 @@ int launch_resume_menu_loop()
     return option_idx;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 void DefaultMenuOptions(void)
 {
 	mMenuOptions->frameSkip=0;   //auto
@@ -1968,10 +1810,11 @@ static void ScanSaveStates(s8 *romname)
 	s8 ext[SAL_MAX_PATH];
 	s8 path[SAL_MAX_PATH];
 
-	if(!strcmp(romname,mSaveStateName)){
-        printf("In ScanSaveStates, is current save state rom so exit, %s\n", romname);
-        return; // is current save state rom so exit
-    }
+	if(!strcmp(romname,mSaveStateName))
+	{
+        	printf("In ScanSaveStates, is current save state rom so exit, %s\n", romname);
+		return; // is current save state rom so exit
+	}
 
 	sal_DirectorySplitFilename(romname,path,filename,ext);
 
@@ -1987,8 +1830,8 @@ static void ScanSaveStates(s8 *romname)
 		*/
 		sprintf(mSaveState[i].filename,"%s%d",savename,i);
 		sprintf(mSaveState[i].fullFilename,"%s%s%s",mSystemDir,SAL_DIR_SEP,mSaveState[i].filename);
-        //printf("In ScanSaveStates, mSaveState[%d].filename = %s\n", i, mSaveState[i].filename);
-        //printf("In ScanSaveStates, mSaveState[%d].fullFilename = %s\n", i, mSaveState[i].fullFilename);
+		//printf("In ScanSaveStates, mSaveState[%d].filename = %s\n", i, mSaveState[i].filename);
+		//printf("In ScanSaveStates, mSaveState[%d].fullFilename = %s\n", i, mSaveState[i].fullFilename);
 		if (sal_FileExists(mSaveState[i].fullFilename)==SAL_TRUE)
 		{
 			// we have a savestate
@@ -2620,8 +2463,8 @@ void MenuInit(const char *systemDir, struct MENU_OPTIONS *menuOptions, char *rom
 	s32 x;
 
 	//strcpy(mSystemDir,systemDir);
-    strcpy(mSystemDir,mRomPath);
-    //printf("******* %s\n", mSystemDir);
+	strcpy(mSystemDir,mRomPath);
+	//printf("******* %s\n", mSystemDir);
 	mMenuOptions=menuOptions;
 
 	if(LoadMenuOptions(mSystemDir, DEFAULT_ROM_DIR_FILENAME, DEFAULT_ROM_DIR_EXT, mRomDir, SAL_MAX_PATH, 0)!=SAL_OK)
@@ -2636,9 +2479,9 @@ void MenuInit(const char *systemDir, struct MENU_OPTIONS *menuOptions, char *rom
 
 	MenuReloadOptions();
 
-    /// ------ Load save states -------
-    strcpy(mRomName, romName);
-    ScanSaveStates(mRomName);
+	/// ------ Load save states -------
+	strcpy(mRomName, romName);
+	ScanSaveStates(mRomName);
 }
 
 
@@ -2680,7 +2523,8 @@ s32 MenuRun(s8 *romName)
 
 		keys=sal_InputPollRepeat();
 
-		if(keys & INP_BUTTON_MENU_EXIT){
+		if(keys & INP_BUTTON_MENU_EXIT)
+		{
 			action = EVENT_EXIT_APP;
 			menuExit=1;
 			break;
@@ -2954,6 +2798,3 @@ s32 MenuRun(s8 *romName)
 
   return action;
 }
-
-
-
