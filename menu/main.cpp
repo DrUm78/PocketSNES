@@ -400,7 +400,7 @@ uint32 S9xReadJoypad (int which1)
 
 		char shell_cmd[100];
 		FILE *fp;
-        sprintf(shell_cmd, "%s %d \"     DISPLAY MODE: %s\"",
+        sprintf(shell_cmd, "%s %d \"    DISPLAY MODE: %s\"",
 				SHELL_CMD_NOTIF, NOTIF_SECONDS_DISP, aspect_ratio_name[aspect_ratio]);
         fp = popen(shell_cmd, "r");
         if (fp == NULL) {
