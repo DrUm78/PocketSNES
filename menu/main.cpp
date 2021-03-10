@@ -8,6 +8,7 @@
 #include "unzip.h"
 #include "zip.h"
 #include "menu.h"
+#include "configfile.h"
 #include "snes9x.h"
 #include "memmap.h"
 #include "apu.h"
@@ -30,6 +31,10 @@ char *mRomName = NULL;
 char *mRomPath = NULL;
 static char *quick_save_file_extension = "quicksave";
 char *quick_save_file = NULL;
+char *cfg_file_default = NULL;
+char *cfg_file_rom = NULL;
+static char *cfg_file_default_name = "default_config";
+static char *cfg_file_extension = "cfg";
 static u32 mLastRate=0;
 
 static s8 mFpsDisplay[16]={""};
@@ -406,6 +411,9 @@ uint32 S9xReadJoypad (int which1)
         if (fp == NULL) {
 		printf("Failed to run command %s\n", shell_cmd);
 		}
+
+        // Save config file
+        configfile_save(cfg_file_rom);
 		return val;
 	}
 	else if ( !(joy & SAL_INPUT_ASPECT_RATIO) && ar_held)
@@ -1009,6 +1017,24 @@ void parse_cmd_line(int argc, char *argv[])
 				/*printf("************ quick_save_file: %s\n", quick_save_file);
 				printf("************ mRomPath: %s\n", mRomPath);
 				printf("************ mRomName: %s\n", mRomName);*/
+
+		        /* Set rom cfg filepath */
+		        cfg_file_rom = (char *)malloc(strlen(mRomPath) + strlen(slash+1) +
+		          strlen(cfg_file_extension) + 2 + 1);
+		        sprintf(cfg_file_rom, "%s/%s.%s",
+		          mRomPath, slash+1, cfg_file_extension);
+		        printf("cfg_file_rom: %s\n", cfg_file_rom);
+
+		        /* Set console cfg filepath */
+		        cfg_file_default = (char *)malloc(strlen(mRomPath) + strlen(cfg_file_default_name) +
+		          strlen(cfg_file_extension) + 2 + 1);
+		        sprintf(cfg_file_default, "%s/%s.%s",
+		          mRomPath, cfg_file_default_name, cfg_file_extension);
+		        printf("cfg_file_default: %s\n", cfg_file_default);
+
+		        /** Load config files */
+		        configfile_load(cfg_file_default);
+		        configfile_load(cfg_file_rom);
 
 				fclose(f);
 			}

@@ -155,18 +155,6 @@ typedef enum{
     NB_MENU_TYPES,
 } ENUM_MENU_TYPE;
 
-
-///------ Definition of the different aspect ratios
-#define ASPECT_RATIOS \
-    X(ASPECT_RATIOS_TYPE_STRETCHED, "STRETCHED") \
-    X(ASPECT_RATIOS_TYPE_CROPPED, "CROPPED") \
-    X(NB_ASPECT_RATIOS_TYPES, "")
-
-////------ Enumeration of the different aspect ratios ------
-#undef X
-#define X(a, b) a,
-typedef enum {ASPECT_RATIOS} ENUM_ASPECT_RATIOS_TYPES;
-
 ///------ Definition of the different resume options
 #define RESUME_OPTIONS \
     X(RESUME_YES, "RESUME GAME") \
@@ -201,10 +189,6 @@ typedef enum {RESUME_OPTIONS} ENUM_RESUME_OPTIONS;
 extern int volume_percentage;
 extern int brightness_percentage;
 
-extern const char *aspect_ratio_name[];
-extern int aspect_ratio;
-extern int aspect_ratio_factor_percent;
-extern int aspect_ratio_factor_step;
 extern int stop_menu_loop;
 
 extern struct SAVE_STATE mSaveState[10];
@@ -213,6 +197,7 @@ extern s8 mSaveStateName[SAL_MAX_PATH];
 extern s8 mSystemDir[SAL_MAX_PATH];
 extern char *mRomName;
 extern char *mRomPath;
+extern char *cfg_file_rom;
 extern char *quick_save_file;
 
 //####################################
