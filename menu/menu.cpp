@@ -2,7 +2,7 @@
 
 #include "sal.h"
 #include "menu.h"
-#include "configfile.h"
+#include "configfile_fk.h"
 #include "snapshot.h"
 #include "snes9x.h"
 #include "gfx.h"

@@ -8,7 +8,7 @@
 #include "unzip.h"
 #include "zip.h"
 #include "menu.h"
-#include "configfile.h"
+#include "configfile_fk.h"
 #include "snes9x.h"
 #include "memmap.h"
 #include "apu.h"
@@ -34,7 +34,7 @@ char *quick_save_file = NULL;
 char *cfg_file_default = NULL;
 char *cfg_file_rom = NULL;
 static char *cfg_file_default_name = "default_config";
-static char *cfg_file_extension = "cfg";
+static char *cfg_file_extension = "fkcfg";
 static u32 mLastRate=0;
 
 static s8 mFpsDisplay[16]={""};
