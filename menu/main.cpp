@@ -410,7 +410,9 @@ uint32 S9xReadJoypad (int which1)
         fp = popen(shell_cmd, "r");
         if (fp == NULL) {
 		printf("Failed to run command %s\n", shell_cmd);
-		}
+	} else {
+		pclose(fp);
+	}
 
         // Save config file
         configfile_save(cfg_file_rom);
@@ -599,16 +601,21 @@ void S9xLoadSRAM (void)
 /* Quick save and turn off the console */
 void quick_save_and_poweroff()
 {
+	FILE * fp;
+
 	printf("Save Instant Play file\n");
 
 	/* Send command to cancel any previously scheduled powerdown */
-	if (popen(SHELL_CMD_CANCEL_SCHED_POWERDOWN, "r") == NULL)
+	fp = popen(SHELL_CMD_CANCEL_SCHED_POWERDOWN, "r");
+	if (fp == NULL)
 	{
 		/* Countdown is still ticking, so better do nothing
 		   than start writing and get interrupted!
 		*/
 		printf("Failed to cancel scheduled shutdown\n");
 		exit(0);
+	} else {
+		pclose(fp);
 	}
 
 	/* Save  */
