@@ -407,12 +407,7 @@ uint32 S9xReadJoypad (int which1)
 		FILE *fp;
         sprintf(shell_cmd, "%s %d \"    DISPLAY MODE: %s\"",
 				SHELL_CMD_NOTIF, NOTIF_SECONDS_DISP, aspect_ratio_name[aspect_ratio]);
-        fp = popen(shell_cmd, "r");
-        if (fp == NULL) {
-		printf("Failed to run command %s\n", shell_cmd);
-	} else {
-		pclose(fp);
-	}
+        system(shell_cmd);
 
         // Save config file
         configfile_save(cfg_file_rom);
