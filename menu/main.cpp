@@ -406,7 +406,7 @@ uint32 S9xReadJoypad (int which1)
 		char shell_cmd[100];
 		FILE *fp;
         sprintf(shell_cmd, "%s %d \"    DISPLAY MODE: %s\"",
-				SHELL_CMD_NOTIF, NOTIF_SECONDS_DISP, aspect_ratio_name[aspect_ratio]);
+		SHELL_CMD_NOTIF_SET, NOTIF_SECONDS_DISP, aspect_ratio_name[aspect_ratio]);
         system(shell_cmd);
 
         // Save config file
