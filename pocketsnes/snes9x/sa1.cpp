@@ -403,7 +403,7 @@ uint8 S9xGetSA1 (uint32 address)
     switch (address)
     {
     case 0x2300:
-	return ((uint8) ((Memory.FillRAM [0x2209] & 0x5f) | 
+	return ((uint8) ((Memory.FillRAM [0x2209] & 0x5f) |
 		 (CPU.IRQActive & (SA1_IRQ_SOURCE | SA1_DMA_IRQ_SOURCE))));
     case 0x2301:
 	return ((Memory.FillRAM [0x2200] & 0xf) |
