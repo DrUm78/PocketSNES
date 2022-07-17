@@ -449,122 +449,13 @@ bool8 S9xGraphicsInit ()
     if (Settings.SixteenBit)
     {
 #endif
-	if (!(GFX.X2 = (uint16 *) malloc (sizeof (uint16) * 0x10000)))
-	    return (FALSE);
-
-	if (!(GFX.ZERO_OR_X2 = (uint16 *) malloc (sizeof (uint16) * 0x10000)) ||
-	    !(GFX.ZERO = (uint16 *) malloc (sizeof (uint16) * 0x10000)))
+	if (!(GFX.ZERO = (uint16 *) malloc (sizeof (uint16) * 0x10000)))
 	{
-	    if (GFX.ZERO_OR_X2)
-	    {
-		free ((char *) GFX.ZERO_OR_X2);
-		GFX.ZERO_OR_X2 = NULL;
-	    }
-	    if (GFX.X2)
-	    {
-		free ((char *) GFX.X2);
-		GFX.X2 = NULL;
-	    }
 	    return (FALSE);
 	}
 	uint32 r, g, b;
 
-	// Build a lookup table that multiplies a packed RGB value by 2 with
-	// saturation.
-	for (r = 0; r <= MAX_RED; r++)
-	{
-	    uint32 r2 = r << 1;
-	    if (r2 > MAX_RED)
-		r2 = MAX_RED;
-	    for (g = 0; g <= MAX_GREEN; g++)
-	    {
-		uint32 g2 = g << 1;
-		if (g2 > MAX_GREEN)
-		    g2 = MAX_GREEN;
-		for (b = 0; b <= MAX_BLUE; b++)
-		{
-		    uint32 b2 = b << 1;
-		    if (b2 > MAX_BLUE)
-			b2 = MAX_BLUE;
-		    GFX.X2 [BUILD_PIXEL2 (r, g, b)] = BUILD_PIXEL2 (r2, g2, b2);
-		    GFX.X2 [BUILD_PIXEL2 (r, g, b) & ~ALPHA_BITS_MASK] = BUILD_PIXEL2 (r2, g2, b2);
-		}
-	    }
-	}
 	ZeroMemory (GFX.ZERO, 0x10000 * sizeof (uint16));
-	ZeroMemory (GFX.ZERO_OR_X2, 0x10000 * sizeof (uint16));
-	// Build a lookup table that if the top bit of the color value is zero
-	// then the value is zero, otherwise multiply the value by 2. Used by
-	// the color subtraction code.
-
-#if defined(OLD_COLOUR_BLENDING)
-	for (r = 0; r <= MAX_RED; r++)
-	{
-	    uint32 r2 = r;
-	    if ((r2 & 0x10) == 0)
-		r2 = 0;
-	    else
-		r2 = (r2 << 1) & MAX_RED;
-
-	    for (g = 0; g <= MAX_GREEN; g++)
-	    {
-		uint32 g2 = g;
-		if ((g2 & GREEN_HI_BIT) == 0)
-		    g2 = 0;
-		else
-		    g2 = (g2 << 1) & MAX_GREEN;
-
-		for (b = 0; b <= MAX_BLUE; b++)
-		{
-		    uint32 b2 = b;
-		    if ((b2 & 0x10) == 0)
-			b2 = 0;
-		    else
-			b2 = (b2 << 1) & MAX_BLUE;
-
-		    GFX.ZERO_OR_X2 [BUILD_PIXEL2 (r, g, b)] = BUILD_PIXEL2 (r2, g2, b2);
-		    GFX.ZERO_OR_X2 [BUILD_PIXEL2 (r, g, b) & ~ALPHA_BITS_MASK] = BUILD_PIXEL2 (r2, g2, b2);
-		}
-	    }
-	}
-#else
-        for (r = 0; r <= MAX_RED; r++)
-        {
-            uint32 r2 = r;
-            if ((r2 & 0x10) == 0)
-                r2 = 0;
-            else
-                r2 = (r2 << 1) & MAX_RED;
-
-            if (r2 == 0)
-                r2 = 1;
-            for (g = 0; g <= MAX_GREEN; g++)
-            {
-                uint32 g2 = g;
-                if ((g2 & GREEN_HI_BIT) == 0)
-                    g2 = 0;
-                else
-                    g2 = (g2 << 1) & MAX_GREEN;
-
-                if (g2 == 0)
-                    g2 = 1;
-                for (b = 0; b <= MAX_BLUE; b++)
-                {
-                    uint32 b2 = b;
-                    if ((b2 & 0x10) == 0)
-                        b2 = 0;
-                    else
-                        b2 = (b2 << 1) & MAX_BLUE;
-
-                    if (b2 == 0)
-                        b2 = 1;
-                    GFX.ZERO_OR_X2 [BUILD_PIXEL2 (r, g, b)] = BUILD_PIXEL2 (r2, g2, b2);
-                    GFX.ZERO_OR_X2 [BUILD_PIXEL2 (r, g, b) & ~ALPHA_BITS_MASK] = BUILD_PIXEL2 (r2, g2, b2);
-                }
-            }
-        }
-#endif
-
 	// Build a lookup table that if the top bit of the color value is zero
 	// then the value is zero, otherwise its just the value.
 	for (r = 0; r <= MAX_RED; r++)
@@ -577,31 +468,29 @@ bool8 S9xGraphicsInit ()
 
 	    for (g = 0; g <= MAX_GREEN; g++)
 	    {
-		uint32 g2 = g;
-		if ((g2 & GREEN_HI_BIT) == 0)
-		    g2 = 0;
-		else
-		    g2 &= ~GREEN_HI_BIT;
-		for (b = 0; b <= MAX_BLUE; b++)
-		{
-		    uint32 b2 = b;
-		    if ((b2 & 0x10) == 0)
-			b2 = 0;
-		    else
-			b2 &= ~0x10;
+			uint32 g2 = g;
+			if ((g2 & GREEN_HI_BIT) == 0)
+				g2 = 0;
+			else
+				g2 &= ~GREEN_HI_BIT;
+			for (b = 0; b <= MAX_BLUE; b++)
+			{
+				uint32 b2 = b;
+				if ((b2 & 0x10) == 0)
+					b2 = 0;
+				else
+					b2 &= ~0x10;
 
-		    GFX.ZERO [BUILD_PIXEL2 (r, g, b)] = BUILD_PIXEL2 (r2, g2, b2);
-		    GFX.ZERO [BUILD_PIXEL2 (r, g, b) & ~ALPHA_BITS_MASK] = BUILD_PIXEL2 (r2, g2, b2);
+				GFX.ZERO [BUILD_PIXEL2 (r, g, b)] = BUILD_PIXEL2 (r2, g2, b2);
+				GFX.ZERO [BUILD_PIXEL2 (r, g, b) & ~ALPHA_BITS_MASK] = BUILD_PIXEL2 (r2, g2, b2);
+			}
 		}
-	    }
 	}
 #ifndef FOREVER_16_BIT
     }
-    else
-    {
-	GFX.X2 = NULL;
-	GFX.ZERO_OR_X2 = NULL;
-	GFX.ZERO = NULL;
+	else
+	{
+		GFX.ZERO = NULL;
     }
 #endif
 
@@ -611,20 +500,10 @@ bool8 S9xGraphicsInit ()
 void S9xGraphicsDeinit (void)
 {
     // Free any memory allocated in S9xGraphicsInit
-    if (GFX.X2)
-    {
-	free ((char *) GFX.X2);
-	GFX.X2 = NULL;
-    }
-    if (GFX.ZERO_OR_X2)
-    {
-	free ((char *) GFX.ZERO_OR_X2);
-	GFX.ZERO_OR_X2 = NULL;
-    }
     if (GFX.ZERO)
     {
-	free ((char *) GFX.ZERO);
-	GFX.ZERO = NULL;
+		free ((char *) GFX.ZERO);
+		GFX.ZERO = NULL;
     }
 }
 
