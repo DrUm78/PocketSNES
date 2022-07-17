@@ -216,6 +216,10 @@ uint32 current_graphic_format = RGB565;
 
 struct SCheatData Cheat;
 
+#ifdef LAGFIX
+bool finishedFrame = false;
+#endif
+
 // Define NO_VOLATILE_SOUND if you're always reading or writing sound from one
 // thread or one co-routine. If you're using interrupts or a thread, sound must
 // be volatile.
