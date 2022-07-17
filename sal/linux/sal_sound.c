@@ -49,6 +49,7 @@ static void sdl_audio_callback (void *userdata, Uint8 *stream, int len)
 
 s32 sal_AudioInit(s32 rate, s32 bits, s32 stereo, s32 Hz)
 {
+	int buffer = 1;
 	audiospec.freq = rate;
 	audiospec.channels = (stereo + 1);
 	audiospec.format = AUDIO_S16;
@@ -57,12 +58,16 @@ s32 sal_AudioInit(s32 rate, s32 bits, s32 stereo, s32 Hz)
 	if (!stereo && (audiospec.samples & 1))
 		audiospec.samples--;
 
-	 
 	SamplesPerFrame = audiospec.samples;
 	BytesPerSample = audiospec.channels * (bits >> 3);
 
-
 	audiospec.callback = sdl_audio_callback;
+	//RS-97 fix, need to be power of 2
+	while (buffer < audiospec.samples)
+	{
+		buffer*=2;
+	}
+	audiospec.samples = buffer;
 
 	if (SDL_OpenAudio(&audiospec, NULL) < 0) {
 		fprintf(stderr, "Unable to initialize audio.\n");
