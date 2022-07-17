@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=PocketSNES
+Comment=Super Nintendo emulator
+Icon=psnes
+Exec=psnes.sh %f
+Categories=emulators
+SelectorFilter=sfc,smc,zip
