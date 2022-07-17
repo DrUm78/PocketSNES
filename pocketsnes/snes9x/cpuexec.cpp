@@ -133,8 +133,10 @@ void S9xMainLoop (void)
 
 void S9xMainLoop_SA1_SFX (void)
 {
-    for (;;)
-	{
+#ifdef LAGFIX
+    do {
+#endif
+    do {
     	APU_EXECUTE ();
     
     	if (CPU.Flags)
@@ -189,32 +191,53 @@ void S9xMainLoop_SA1_SFX (void)
     	if (SA1.Executing)
     	    S9xSA1MainLoop ();
     	DO_HBLANK_CHECK_SFX();
-    }
+
+#ifdef LAGFIX
+        if(finishedFrame)
+            break;
+#endif
+    } while(true);
 
     ICPU.Registers.PC = CPU.PC - CPU.PCBase;
-    S9xPackStatus ();
     IAPU.Registers.PC = IAPU.PC - IAPU.RAM;
-    S9xAPUPackStatus ();
-    if (CPU.Flags & SCAN_KEYS_FLAG)
-    {
-	    S9xSyncSpeed ();
-        CPU.Flags &= ~SCAN_KEYS_FLAG;
-    }
 
-#ifdef DETECT_NASTY_FX_INTERLEAVE
-    if (CPU.BRKTriggered && Settings.SuperFX && !CPU.TriedInterleavedMode2)
+#ifdef LAGFIX
+    if(!finishedFrame)
     {
-    	CPU.TriedInterleavedMode2 = TRUE;
-    	CPU.BRKTriggered = FALSE;
-    	S9xDeinterleaveMode2 ();
+#endif
+        S9xPackStatus ();
+        S9xAPUPackStatus ();
+
+        if (CPU.Flags & SCAN_KEYS_FLAG)
+        {
+            S9xSyncSpeed ();
+            CPU.Flags &= ~SCAN_KEYS_FLAG;
+        }
+#ifdef DETECT_NASTY_FX_INTERLEAVE
+        if (CPU.BRKTriggered && Settings.SuperFX && !CPU.TriedInterleavedMode2)
+        {
+            CPU.TriedInterleavedMode2 = TRUE;
+            CPU.BRKTriggered = FALSE;
+            S9xDeinterleaveMode2 ();
+        }
+#endif
+#ifdef LAGFIX
     }
+    else
+    {
+        finishedFrame = false;
+        break;
+    }
+    } while(!finishedFrame);
 #endif
 }
 
 void S9xMainLoop_SA1_NoSFX (void)
 {
-    for (;;)
-	{
+#ifdef LAGFIX
+    do {
+#endif
+    do {
     	APU_EXECUTE ();
     
     	if (CPU.Flags)
@@ -269,23 +292,44 @@ void S9xMainLoop_SA1_NoSFX (void)
     	if (SA1.Executing)
     	    S9xSA1MainLoop ();
     	DO_HBLANK_CHECK_NoSFX();
-    }
+
+#ifdef LAGFIX
+        if(finishedFrame)
+            break;
+#endif
+    } while(true);
 
     ICPU.Registers.PC = CPU.PC - CPU.PCBase;
-    S9xPackStatus ();
     IAPU.Registers.PC = IAPU.PC - IAPU.RAM;
+
+#ifdef LAGFIX
+    if(!finishedFrame)
+    {
+#endif
+    S9xPackStatus ();
     S9xAPUPackStatus ();
     if (CPU.Flags & SCAN_KEYS_FLAG)
     {
 	    S9xSyncSpeed ();
         CPU.Flags &= ~SCAN_KEYS_FLAG;
     }
+#ifdef LAGFIX
+    }
+    else
+    {
+        finishedFrame = false;
+        break;
+    }
+    } while(!finishedFrame);
+#endif
 }
 
 void S9xMainLoop_NoSA1_SFX (void)
 {
-    for (;;)
-	{
+#ifdef LAGFIX
+    do {
+#endif
+    do {
     	APU_EXECUTE ();
     
     	if (CPU.Flags)
@@ -338,32 +382,52 @@ void S9xMainLoop_NoSA1_SFX (void)
     	(*ICPU.S9xOpcodes [*CPU.PC++].S9xOpcode) ();
 	
     	DO_HBLANK_CHECK_SFX();
-    }
+
+#ifdef LAGFIX
+        if(finishedFrame)
+            break;
+#endif
+    } while(true);
 
     ICPU.Registers.PC = CPU.PC - CPU.PCBase;
-    S9xPackStatus ();
     IAPU.Registers.PC = IAPU.PC - IAPU.RAM;
-    S9xAPUPackStatus ();
-    if (CPU.Flags & SCAN_KEYS_FLAG)
+#ifdef LAGFIX
+    if(!finishedFrame)
     {
-	    S9xSyncSpeed ();
-        CPU.Flags &= ~SCAN_KEYS_FLAG;
-    }
+#endif
+        S9xPackStatus ();
+        S9xAPUPackStatus ();
+        if (CPU.Flags & SCAN_KEYS_FLAG)
+        {
+            S9xSyncSpeed ();
+            CPU.Flags &= ~SCAN_KEYS_FLAG;
+        }
 
 #ifdef DETECT_NASTY_FX_INTERLEAVE
-    if (CPU.BRKTriggered && Settings.SuperFX && !CPU.TriedInterleavedMode2)
-    {
-    	CPU.TriedInterleavedMode2 = TRUE;
-    	CPU.BRKTriggered = FALSE;
-    	S9xDeinterleaveMode2 ();
+        if (CPU.BRKTriggered && Settings.SuperFX && !CPU.TriedInterleavedMode2)
+        {
+            CPU.TriedInterleavedMode2 = TRUE;
+            CPU.BRKTriggered = FALSE;
+            S9xDeinterleaveMode2 ();
+        }
+#endif
+#ifdef LAGFIX
     }
+    else
+    {
+        finishedFrame = false;
+        break;
+    }
+    } while(!finishedFrame);
 #endif
 }
 
 void S9xMainLoop_NoSA1_NoSFX (void)
 {
-    for (;;)
-	{
+#ifdef LAGFIX
+    do {
+#endif
+    do {
     	APU_EXECUTE ();
     
     	if (CPU.Flags)
@@ -416,17 +480,34 @@ void S9xMainLoop_NoSA1_NoSFX (void)
     	(*ICPU.S9xOpcodes [*CPU.PC++].S9xOpcode) ();
 	
     	DO_HBLANK_CHECK_NoSFX();
-    }
+#ifdef LAGFIX
+        if(finishedFrame)
+            break;
+#endif
+    } while(true);
 
     ICPU.Registers.PC = CPU.PC - CPU.PCBase;
-    S9xPackStatus ();
     IAPU.Registers.PC = IAPU.PC - IAPU.RAM;
-    S9xAPUPackStatus ();
-    if (CPU.Flags & SCAN_KEYS_FLAG)
+#ifdef LAGFIX
+    if(!finishedFrame)
     {
-	    S9xSyncSpeed ();
-        CPU.Flags &= ~SCAN_KEYS_FLAG;
+#endif
+        S9xPackStatus ();
+        S9xAPUPackStatus ();
+        if (CPU.Flags & SCAN_KEYS_FLAG)
+        {
+            S9xSyncSpeed ();
+            CPU.Flags &= ~SCAN_KEYS_FLAG;
+        }
+#ifdef LAGFIX
     }
+    else
+    {
+        finishedFrame = false;
+        break;
+    }
+    } while(!finishedFrame);
+#endif
 }
 
 void S9xSetIRQ (uint32 source)

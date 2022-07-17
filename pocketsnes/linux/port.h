@@ -105,6 +105,7 @@ typedef short			int16_32;
 #define LSB_FIRST
 #define STATIC static
 #define FASTCALL
+#define LAGFIX
 
 #define PIXEL_FORMAT RGB565
 #define FOREVER_16_BIT
