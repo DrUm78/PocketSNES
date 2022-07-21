@@ -3915,12 +3915,12 @@ void CMemory::ApplyROMFixes ()
 		strncmp (ROMId, "ARF", 3) == 0 ||
 		// Tales of Phantasia
 		strncmp (ROMId, "ATV", 3) == 0 ||
-		// Act Raiser 1 & 2
+		// ActRaiser 1 & 2
+		strncasecmp (ROMName, "ACTRAISER", 9) == 0 || // Required for ActRaiser 1, case sensitive??
 		strncasecmp (ROMName, "ActRaiser", 9) == 0 ||
 		// Soulblazer
 		strcmp (ROMName, "SOULBLAZER - 1 USA") == 0 ||
 		strcmp (ROMName, "SOULBLADER - 1") == 0 ||
-
 		// Terranigma
 		strncmp (ROMId, "AQT", 3) == 0 ||
 		// Robotrek
