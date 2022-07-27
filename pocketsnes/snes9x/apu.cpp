@@ -107,7 +107,7 @@ int spc_is_dumping=0;
 int spc_is_dumping_temp;
 uint8 spc_dump_dsp[0x100]; 
 
-extern int32  NoiseFreq       [32];
+extern int NoiseFreq [32];
 #ifdef DEBUGGER
 void S9xTraceSoundDSP (const char *s, int i1 = 0, int i2 = 0, int i3 = 0,
 					   int i4 = 0, int i5 = 0, int i6 = 0, int i7 = 0);
@@ -123,6 +123,8 @@ bool8 S9xInitAPU ()
 		return (FALSE);
     }
 
+	memset(IAPU.RAM, 0, 0x10000);
+	
     return (TRUE);
 }
 
@@ -156,7 +158,7 @@ void S9xResetAPU ()
 		memcpy(IAPU.RAM+(i<<8), IAPU.RAM, 0x100);
 	}
 	
-    ZeroMemory (APU.OutPorts, sizeof(APU.OutPorts));
+    ZeroMemory (APU.OutPorts, 4);
     IAPU.DirectPage = IAPU.RAM;
     // memmove converted: Different mallocs [Neb]
     // DS2 DMA notes: The APU ROM is not 32-byte aligned [Neb]
@@ -168,19 +170,19 @@ void S9xResetAPU ()
     APU.Cycles = 0;
     IAPU.Registers.YA.W = 0;
     IAPU.Registers.X = 0;
-    IAPU.Registers.S = 0xef;
-    IAPU.Registers.P = 0x02;
+    IAPU.Registers.S = 0xff;
+    IAPU.Registers.P = 0;
     S9xAPUUnpackStatus ();
     IAPU.Registers.PC = 0;
     IAPU.APUExecuting = Settings.APUEnabled;
 #ifdef SPC700_SHUTDOWN
     IAPU.WaitAddress1 = NULL;
     IAPU.WaitAddress2 = NULL;
-    IAPU.WaitCounter = 1;
+    IAPU.WaitCounter = 0;
 #endif
     APU.ShowROM = TRUE;
     IAPU.RAM [0xf1] = 0x80;
-
+		
     for (i = 0; i < 3; i++)
     {
 		APU.TimerEnabled [i] = FALSE;
@@ -190,20 +192,20 @@ void S9xResetAPU ()
     }
     for (int j = 0; j < 0x80; j++)
 		APU.DSP [j] = 0;
-
+	
     IAPU.TwoCycles = IAPU.OneCycle * 2;
-
+	
     for (i = 0; i < 256; i++)
 		S9xAPUCycles [i] = S9xAPUCycleLengths [i] * IAPU.OneCycle;
-
-	APU.DSP [APU_ENDX] = 0;
-	APU.DSP [APU_KOFF] = 0;
-	APU.DSP [APU_KON] = 0;
-	APU.DSP [APU_FLG] = APU_SOFT_RESET | APU_MUTE;
-	APU.KeyedChannels = 0;
-
-	S9xResetSound (TRUE);
-	S9xSetEchoEnable (0);
+	
+    APU.DSP [APU_ENDX] = 0;
+    APU.DSP [APU_KOFF] = 0;
+    APU.DSP [APU_KON] = 0;
+    APU.DSP [APU_FLG] = APU_MUTE | APU_ECHO_DISABLED;
+    APU.KeyedChannels = 0;
+	
+    S9xResetSound (TRUE);
+    S9xSetEchoEnable (0);
 }
 
 void S9xSetAPUDSP (uint8 byte)
@@ -235,7 +237,6 @@ void S9xSetAPUDSP (uint8 byte)
 		else
 		{
 			S9xSetEchoWriteEnable (!(byte & APU_ECHO_DISABLED));
-			so.mute_sound = !!(byte & APU_MUTE);
 			if (byte & APU_MUTE)
 			{
 #ifdef DEBUGGER
@@ -306,7 +307,8 @@ void S9xSetAPUDSP (uint8 byte)
 				S9xTraceSoundDSP ("[%d] Master volume left:%d\n", 
 				ICPU.Scanline, (signed char) byte);
 #endif
-			S9xSetMasterVolume ((int8) byte, (int8) APU.DSP [APU_MVOL_RIGHT]);
+			S9xSetMasterVolume ((signed char) byte,
+				(signed char) APU.DSP [APU_MVOL_RIGHT]);
 		}
 		break;
     case APU_MVOL_RIGHT:
@@ -317,7 +319,8 @@ void S9xSetAPUDSP (uint8 byte)
 				S9xTraceSoundDSP ("[%d] Master volume right:%d\n",
 				ICPU.Scanline, (signed char) byte);
 #endif
-			S9xSetMasterVolume ((int8) APU.DSP [APU_MVOL_LEFT], (int8) byte);
+			S9xSetMasterVolume ((signed char) APU.DSP [APU_MVOL_LEFT],
+				(signed char) byte);
 		}
 		break;
     case APU_EVOL_LEFT:
@@ -328,7 +331,8 @@ void S9xSetAPUDSP (uint8 byte)
 				S9xTraceSoundDSP ("[%d] Echo volume left:%d\n",
 				ICPU.Scanline, (signed char) byte);
 #endif
-			S9xSetEchoVolume ((int8) byte, (int8) APU.DSP [APU_EVOL_RIGHT]);
+			S9xSetEchoVolume ((signed char) byte,
+				(signed char) APU.DSP [APU_EVOL_RIGHT]);
 		}
 		break;
     case APU_EVOL_RIGHT:
@@ -339,7 +343,8 @@ void S9xSetAPUDSP (uint8 byte)
 				S9xTraceSoundDSP ("[%d] Echo volume right:%d\n",
 				ICPU.Scanline, (signed char) byte);
 #endif
-			S9xSetEchoVolume ((int8) APU.DSP [APU_EVOL_LEFT], (int8) byte);
+			S9xSetEchoVolume ((signed char) APU.DSP [APU_EVOL_LEFT],
+				(signed char) byte);
 		}
 		break;
     case APU_ENDX:
@@ -370,10 +375,11 @@ void S9xSetAPUDSP (uint8 byte)
 					if (APU.KeyedChannels & mask)
 					{
 						{
-						KeyOnPrev&=~mask;
-						APU.KeyedChannels &= ~mask;
-						APU.DSP [APU_KON] &= ~mask;
-						S9xSetSoundKeyOff (c);
+							KeyOnPrev&=~mask;
+							APU.KeyedChannels &= ~mask;
+							APU.DSP [APU_KON] &= ~mask;
+							//APU.DSP [APU_KOFF] |= mask;
+							S9xSetSoundKeyOff (c);
 						}
 					}
 				}
@@ -381,6 +387,7 @@ void S9xSetAPUDSP (uint8 byte)
 				{
 					KeyOnPrev&=~mask;
 					APU.KeyedChannels |= mask;
+					//APU.DSP [APU_KON] |= mask;
 					APU.DSP [APU_KOFF] &= ~mask;
 					APU.DSP [APU_ENDX] &= ~mask;
 					S9xPlaySample (c);
@@ -390,9 +397,10 @@ void S9xSetAPUDSP (uint8 byte)
 			if (Settings.TraceSoundDSP)
 				S9xTraceSoundDSP ("\n");
 #endif
-			APU.DSP [APU_KOFF] = byte;
-			return;
 		}
+		//KeyOnPrev=0;
+		APU.DSP [APU_KOFF] = byte;
+		return;
     case APU_KON:
 		if (spc_is_dumping)
 		{
@@ -458,7 +466,8 @@ void S9xSetAPUDSP (uint8 byte)
 				S9xTraceSoundDSP ("[%d] %d volume left: %d\n", 
 				ICPU.Scanline, reg>>4, (signed char) byte);
 #endif
-			S9xSetSoundVolume (reg >> 4, (int8) byte, (int8) APU.DSP [reg + 1]);
+			S9xSetSoundVolume (reg >> 4, (signed char) byte,
+				(signed char) APU.DSP [reg + 1]);
 		}
 		break;
     case APU_VOL_RIGHT + 0x00:
@@ -477,7 +486,8 @@ void S9xSetAPUDSP (uint8 byte)
 				S9xTraceSoundDSP ("[%d] %d volume right: %d\n", 
 				ICPU.Scanline, reg >>4, (signed char) byte);
 #endif
-			S9xSetSoundVolume (reg >> 4, (int8) APU.DSP [reg - 1], (int8) byte);
+			S9xSetSoundVolume (reg >> 4, (signed char) APU.DSP [reg - 1],
+				(signed char) byte);
 		}
 		break;
 		
@@ -494,7 +504,7 @@ void S9xSetAPUDSP (uint8 byte)
 			S9xTraceSoundDSP ("[%d] %d freq low: %d\n",
 			ICPU.Scanline, reg>>4, byte);
 #endif
-		S9xSetSoundHertz(reg >> 4, ((((int16_t) byte + ((int16_t) APU.DSP [reg + 1] << 8)) & FREQUENCY_MASK) * 32000) >> 12);
+		S9xSetSoundHertz (reg >> 4, ((byte + (APU.DSP [reg + 1] << 8)) & FREQUENCY_MASK) * 8);
 		break;
 		
     case APU_P_HIGH + 0x00:
@@ -510,7 +520,27 @@ void S9xSetAPUDSP (uint8 byte)
 			S9xTraceSoundDSP ("[%d] %d freq high: %d\n",
 			ICPU.Scanline, reg>>4, byte);
 #endif
-		S9xSetSoundHertz(reg >> 4, (((byte << 8) + APU.DSP [reg - 1]) & FREQUENCY_MASK) * 8);
+		S9xSetSoundHertz (reg >> 4, 
+			(((byte << 8) + APU.DSP [reg - 1]) & FREQUENCY_MASK) * 8);
+		break;
+		
+    case APU_SRCN + 0x00:
+    case APU_SRCN + 0x10:
+    case APU_SRCN + 0x20:
+    case APU_SRCN + 0x30:
+    case APU_SRCN + 0x40:
+    case APU_SRCN + 0x50:
+    case APU_SRCN + 0x60:
+    case APU_SRCN + 0x70:
+		if (byte != APU.DSP [reg])
+		{
+#ifdef DEBUGGER
+			if (Settings.TraceSoundDSP)
+				S9xTraceSoundDSP ("[%d] %d sample number: %d\n",
+				ICPU.Scanline, reg>>4, byte);
+#endif
+			S9xSetSoundSample (reg >> 4, byte);
+		}
 		break;
 		
     case APU_ADSR1 + 0x00:
@@ -528,7 +558,10 @@ void S9xSetAPUDSP (uint8 byte)
 				S9xTraceSoundDSP ("[%d] %d adsr1: %02x\n",
 				ICPU.Scanline, reg>>4, byte);
 #endif
-			S9xFixEnvelope (reg >> 4, APU.DSP [reg + 2], byte, APU.DSP [reg + 1]);
+			{
+				S9xFixEnvelope (reg >> 4, APU.DSP [reg + 2], byte, 
+					APU.DSP [reg + 1]);
+			}
 		}
 		break;
 		
@@ -547,7 +580,10 @@ void S9xSetAPUDSP (uint8 byte)
 				S9xTraceSoundDSP ("[%d] %d adsr2: %02x\n", 
 				ICPU.Scanline, reg>>4, byte);
 #endif
-			S9xFixEnvelope (reg >> 4, APU.DSP [reg + 1], APU.DSP [reg - 1], byte);
+			{
+				S9xFixEnvelope (reg >> 4, APU.DSP [reg + 1], APU.DSP [reg - 1],
+					byte);
+			}
 		}
 		break;
 		
@@ -566,8 +602,39 @@ void S9xSetAPUDSP (uint8 byte)
 				S9xTraceSoundDSP ("[%d] %d gain: %02x\n",
 				ICPU.Scanline, reg>>4, byte);
 #endif
-			S9xFixEnvelope (reg >> 4, byte, APU.DSP [reg - 2], APU.DSP [reg - 1]);
+			{
+				S9xFixEnvelope (reg >> 4, byte, APU.DSP [reg - 2],
+					APU.DSP [reg - 1]);
+			}
 		}
+		break;
+		
+    case APU_ENVX + 0x00:
+    case APU_ENVX + 0x10:
+    case APU_ENVX + 0x20:
+    case APU_ENVX + 0x30:
+    case APU_ENVX + 0x40:
+    case APU_ENVX + 0x50:
+    case APU_ENVX + 0x60:
+    case APU_ENVX + 0x70:
+		break;
+		
+    case APU_OUTX + 0x00:
+    case APU_OUTX + 0x10:
+    case APU_OUTX + 0x20:
+    case APU_OUTX + 0x30:
+    case APU_OUTX + 0x40:
+    case APU_OUTX + 0x50:
+    case APU_OUTX + 0x60:
+    case APU_OUTX + 0x70:
+		break;
+		
+    case APU_DIR:
+#ifdef DEBUGGER
+		if (Settings.TraceSoundDSP)
+			S9xTraceSoundDSP ("[%d] Sample directory to: %02x\n",
+			ICPU.Scanline, byte);
+#endif
 		break;
 		
     case APU_PMON:
@@ -631,7 +698,10 @@ void S9xSetAPUDSP (uint8 byte)
 		break;
 		
     case APU_EFB:
-		S9xSetEchoFeedback ((int8) byte);
+		S9xSetEchoFeedback ((signed char) byte);
+		break;
+		
+    case APU_ESA:
 		break;
 		
     case APU_EDL:
@@ -646,7 +716,7 @@ void S9xSetAPUDSP (uint8 byte)
     case APU_C5:
     case APU_C6:
     case APU_C7:
-		S9xSetFilterCoefficient (reg >> 4, (int8) byte);
+		S9xSetFilterCoefficient (reg >> 4, (signed char) byte);
 		break;
     default:
 		// XXX
@@ -663,42 +733,91 @@ void S9xSetAPUDSP (uint8 byte)
 
 void S9xFixEnvelope (int channel, uint8 gain, uint8 adsr1, uint8 adsr2)
 {
-    if (adsr1 & 0x80) // ADSR mode
+    if (adsr1 & 0x80)
     {
+		// ADSR mode
+		static unsigned long AttackRate [16] = {
+			4100, 2600, 1500, 1000, 640, 380, 260, 160,
+				96, 64, 40, 24, 16, 10, 6, 1
+		};
+		static unsigned long DecayRate [8] = {
+			1200, 740, 440, 290, 180, 110, 74, 37
+		};
+		static unsigned long SustainRate [32] = {
+			(unsigned long)~0, 38000, 28000, 24000, 19000, 14000, 12000, 9400,
+				7100, 5900, 4700, 3500, 2900, 2400, 1800, 1500,
+				1200, 880, 740, 590, 440, 370, 290, 220,
+				180, 150, 110, 92, 74, 55, 37, 18
+		};
 		// XXX: can DSP be switched to ADSR mode directly from GAIN/INCREASE/
 		// DECREASE mode? And if so, what stage of the sequence does it start
 		// at?
 		if (S9xSetSoundMode (channel, MODE_ADSR))
-            S9xSetSoundADSR(channel, adsr1 & 0xf, (adsr1 >> 4) & 7, adsr2 & 0x1f, (adsr2 >> 5) & 7, 8);
+		{
+			// Hack for ROMs that use a very short attack rate, key on a 
+			// channel, then switch to decay mode. e.g. Final Fantasy II.
+			
+			int attack = AttackRate [adsr1 & 0xf];
+			
+			if (attack == 1 && (!Settings.SoundSync
+#ifdef __WIN32__
+                || Settings.SoundDriver != WIN_SNES9X_DIRECT_SOUND_DRIVER
+#endif
+                ))
+				attack = 0;
+			
+			S9xSetSoundADSR (channel, attack,
+				DecayRate [(adsr1 >> 4) & 7],
+				SustainRate [adsr2 & 0x1f],
+				(adsr2 >> 5) & 7, 8);
+		}
     }
     else
     {
 		// Gain mode
-		if (!(gain & 0x80))
+		if ((gain & 0x80) == 0)
 		{
 			if (S9xSetSoundMode (channel, MODE_GAIN))
 			{
-				S9xSetEnvelopeRate (channel, 0, 0, gain & 0x7f, 0);
+				S9xSetEnvelopeRate (channel, 0, 0, gain & 0x7f);
 				S9xSetEnvelopeHeight (channel, gain & 0x7f);
 			}
 		}
-		else if (gain & 0x40)
-		{
-			// Increase mode
-			if(S9xSetSoundMode(channel, (gain & 0x20) ?
-							   MODE_INCREASE_BENT_LINE :
-							   MODE_INCREASE_LINEAR))
-				S9xSetEnvelopeRate(channel, gain, 1, 127, (3 << 28) | gain);
-		}
-		else if (gain & 0x20)
-		{
-			if(S9xSetSoundMode(channel, MODE_DECREASE_EXPONENTIAL))
-				S9xSetEnvelopeRate(channel, gain, -1, 0, (4 << 28) | gain);
-		}
 		else
 		{
-			if (S9xSetSoundMode(channel, MODE_DECREASE_LINEAR))
-				S9xSetEnvelopeRate(channel, gain, -1, 0, (3 << 28) | gain);
+			static unsigned long IncreaseRate [32] = {
+				(unsigned long)~0, 4100, 3100, 2600, 2000, 1500, 1300, 1000,
+					770, 640, 510, 380, 320, 260, 190, 160,
+					130, 96, 80, 64, 48, 40, 32, 24,
+					20, 16, 12, 10, 8, 6, 4, 2
+			};
+			static unsigned long DecreaseRateExp [32] = {
+				(unsigned long)~0, 38000, 28000, 24000, 19000, 14000, 12000, 9400,
+					7100, 5900, 4700, 3500, 2900, 2400, 1800, 1500,
+					1200, 880, 740, 590, 440, 370, 290, 220,
+					180, 150, 110, 92, 74, 55, 37, 18
+			};
+			if (gain & 0x40)
+			{
+				// Increase mode
+				if (S9xSetSoundMode (channel, (gain & 0x20) ?
+MODE_INCREASE_BENT_LINE :
+				MODE_INCREASE_LINEAR))
+				{
+					S9xSetEnvelopeRate (channel, IncreaseRate [gain & 0x1f],
+						1, 127);
+				}
+			}
+			else
+			{
+				uint32 rate = (gain & 0x20) ? DecreaseRateExp [gain & 0x1f] / 2 :
+			IncreaseRate [gain & 0x1f];
+			int mode = (gain & 0x20) ? MODE_DECREASE_EXPONENTIAL
+				: MODE_DECREASE_LINEAR;
+			
+			if (S9xSetSoundMode (channel, mode))
+				S9xSetEnvelopeRate (channel, rate, -1, 0);
+			}
 		}
     }
 }
@@ -707,39 +826,39 @@ void S9xSetAPUControl (uint8 byte)
 {
 	//if (byte & 0x40)
 	//printf ("*** Special SPC700 timing enabled\n");
-	if ((byte & 1) && !APU.TimerEnabled [0])
-	{
+    if ((byte & 1) != 0 && !APU.TimerEnabled [0])
+    {
 		APU.Timer [0] = 0;
 		IAPU.RAM [0xfd] = 0;
 		if ((APU.TimerTarget [0] = IAPU.RAM [0xfa]) == 0)
 			APU.TimerTarget [0] = 0x100;
-	}
-	if ((byte & 2) && !APU.TimerEnabled [1])
-	{
+    }
+    if ((byte & 2) != 0 && !APU.TimerEnabled [1])
+    {
 		APU.Timer [1] = 0;
 		IAPU.RAM [0xfe] = 0;
 		if ((APU.TimerTarget [1] = IAPU.RAM [0xfb]) == 0)
 			APU.TimerTarget [1] = 0x100;
-	}
-	if ((byte & 4) && !APU.TimerEnabled [2])
-	{
+    }
+    if ((byte & 4) != 0 && !APU.TimerEnabled [2])
+    {
 		APU.Timer [2] = 0;
 		IAPU.RAM [0xff] = 0;
 		if ((APU.TimerTarget [2] = IAPU.RAM [0xfc]) == 0)
 			APU.TimerTarget [2] = 0x100;
-	}
-	APU.TimerEnabled [0] = !!(byte & 1);
-	APU.TimerEnabled [1] = !!(byte & 2);
-	APU.TimerEnabled [2] = !!(byte & 4);
+    }
+    APU.TimerEnabled [0] = byte & 1;
+    APU.TimerEnabled [1] = (byte & 2) >> 1;
+    APU.TimerEnabled [2] = (byte & 4) >> 2;
 	
-	if (byte & 0x10)
+    if (byte & 0x10)
 		IAPU.RAM [0xF4] = IAPU.RAM [0xF5] = 0;
 	
-	if (byte & 0x20)
+    if (byte & 0x20)
 		IAPU.RAM [0xF6] = IAPU.RAM [0xF7] = 0;
 	
-	if (byte & 0x80)
-	{
+    if (byte & 0x80)
+    {
 		if (!APU.ShowROM)
 		{
 			// memmove converted: Different mallocs [Neb]
@@ -747,15 +866,42 @@ void S9xSetAPUControl (uint8 byte)
 			memcpy (&IAPU.RAM [0xffc0], APUROM, sizeof (APUROM));
 			APU.ShowROM = TRUE;
 		}
-	}
-	else if (APU.ShowROM)
-	{
-		APU.ShowROM = FALSE;
-		// memmove converted: Different mallocs [Neb]
-		// DS2 DMA notes: The APU ROM is not 32-byte aligned [Neb]
-		memmove (&IAPU.RAM [0xffc0], APU.ExtraRAM, sizeof (APUROM));
-	}
-	IAPU.RAM [0xf1] = byte;
+    }
+    else
+    {
+		if (APU.ShowROM)
+		{
+			APU.ShowROM = FALSE;
+			// memmove converted: Different mallocs [Neb]
+			// DS2 DMA notes: The APU ROM is not 32-byte aligned [Neb]
+			memcpy (&IAPU.RAM [0xffc0], APU.ExtraRAM, sizeof (APUROM));
+		}
+    }
+    IAPU.RAM [0xf1] = byte;
+}
+
+void S9xSetAPUTimer (uint16 Address, uint8 byte)
+{
+    IAPU.RAM [Address] = byte;
+	
+    switch (Address)
+    {
+    case 0xfa:
+		if ((APU.TimerTarget [0] = IAPU.RAM [0xfa]) == 0)
+			APU.TimerTarget [0] = 0x100;
+		APU.TimerValueWritten [0] = TRUE;
+		break;
+    case 0xfb:
+		if ((APU.TimerTarget [1] = IAPU.RAM [0xfb]) == 0)
+			APU.TimerTarget [1] = 0x100;
+		APU.TimerValueWritten [1] = TRUE;
+		break;
+    case 0xfc:
+		if ((APU.TimerTarget [2] = IAPU.RAM [0xfc]) == 0)
+			APU.TimerTarget [2] = 0x100;
+		APU.TimerValueWritten [2] = TRUE;
+		break;
+    }
 }
 
 uint8 S9xGetAPUDSP ()
@@ -765,6 +911,10 @@ uint8 S9xGetAPUDSP ()
 	
     switch (reg)
     {
+    case APU_KON:
+		break;
+    case APU_KOFF:
+		break;
     case APU_OUTX + 0x00:
     case APU_OUTX + 0x10:
     case APU_OUTX + 0x20:
@@ -774,9 +924,11 @@ uint8 S9xGetAPUDSP ()
     case APU_OUTX + 0x60:
     case APU_OUTX + 0x70:
 		if (SoundData.channels [reg >> 4].state == SOUND_SILENT)
-			return 0;
-		return (SoundData.channels [reg >> 4].sample >> 8) | (SoundData.channels [reg >> 4].sample & 0xff);
-	case APU_ENVX + 0x00:
+			return (0);
+		return ((SoundData.channels [reg >> 4].sample >> 8) |
+			(SoundData.channels [reg >> 4].sample & 0xff));
+		
+    case APU_ENVX + 0x00:
     case APU_ENVX + 0x10:
     case APU_ENVX + 0x20:
     case APU_ENVX + 0x30:
@@ -784,13 +936,15 @@ uint8 S9xGetAPUDSP ()
     case APU_ENVX + 0x50:
     case APU_ENVX + 0x60:
     case APU_ENVX + 0x70:
-		{
-			int32_t eVal = SoundData.channels [reg >> 4].envx;
-			return (eVal > 0x7F) ? 0x7F : (eVal < 0 ? 0 : eVal);
-		}
-	default:
+		return ((uint8) S9xGetEnvelopeHeight (reg >> 4));
+		
+    case APU_ENDX:
+		// To fix speech in Magical Drop 2 6/11/00
+		//	APU.DSP [APU_ENDX] = 0;
+		break;
+    default:
 		break;
     }
-    return byte;
+    return (byte);
 }
 

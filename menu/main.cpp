@@ -626,6 +626,7 @@ void quick_save_and_poweroff()
 }
 
 static u32 LastAudioRate = 0;
+static u32 LastStereo = 0;
 static u32 LastHz = 0;
 
 static
@@ -645,17 +646,28 @@ int Run(int sound)
 	sal_TimerInit(Settings.FrameTime);
 
 	if (sound) {
-		if (LastAudioRate != mMenuOptions.soundRate ||
-			LastHz != (u32)Memory.ROMFramesPerSecond)
+		/*
+		Settings.SoundPlaybackRate = mMenuOptions.soundRate;
+		Settings.Stereo = mMenuOptions.stereo ? TRUE : FALSE;
+		*/
+#ifndef FOREVER_16_BIT_SOUND
+		Settings.SixteenBitSound=true;
+#endif
+
+		if (LastAudioRate != mMenuOptions.soundRate || LastStereo != mMenuOptions.stereo || LastHz != Memory.ROMFramesPerSecond)
 		{
 			if (LastAudioRate != 0)
 			{
 				sal_AudioClose();
 			}
-			sal_AudioInit(mMenuOptions.soundRate, 16, Memory.ROMFramesPerSecond);
-			S9xInitSound (mMenuOptions.soundRate, TRUE, sal_AudioGetSamplesPerFrame() * sal_AudioGetBytesPerSample());
+			sal_AudioInit(mMenuOptions.soundRate, 16,
+						mMenuOptions.stereo, Memory.ROMFramesPerSecond);
+
+			S9xInitSound (mMenuOptions.soundRate,
+						mMenuOptions.stereo, sal_AudioGetSamplesPerFrame() * sal_AudioGetBytesPerSample());
 			S9xSetPlaybackRate(mMenuOptions.soundRate);
 			LastAudioRate = mMenuOptions.soundRate;
+			LastStereo = mMenuOptions.stereo;
 			LastHz = Memory.ROMFramesPerSecond;
 		}
 		sal_AudioSetMuted(0);
@@ -781,6 +793,7 @@ int SnesInit()
 
 	Settings.JoystickEnabled = FALSE;
 	Settings.SoundPlaybackRate = 44100;
+	Settings.Stereo = TRUE;
 	Settings.SoundBufferSize = 0;
 	Settings.CyclesPercentage = 100;
 	Settings.DisableSoundEcho = FALSE;
