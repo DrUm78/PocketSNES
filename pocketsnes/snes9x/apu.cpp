@@ -936,13 +936,11 @@ uint8 S9xGetAPUDSP ()
     case APU_ENVX + 0x50:
     case APU_ENVX + 0x60:
     case APU_ENVX + 0x70:
-		return ((uint8) S9xGetEnvelopeHeight (reg >> 4));
-		
-    case APU_ENDX:
-		// To fix speech in Magical Drop 2 6/11/00
-		//	APU.DSP [APU_ENDX] = 0;
-		break;
-    default:
+		{
+			int32_t eVal = SoundData.channels [reg >> 4].envx;
+			return (eVal > 0x7F) ? 0x7F : (eVal < 0 ? 0 : eVal);
+		}
+	default:
 		break;
     }
     return (byte);
