@@ -15,6 +15,6 @@ if  [ ! -f opk/psnes ]; then
 fi
 
 rm -f *.opk
-mksquashfs opk/ pocketsnes_v1.3_funkey-s.opk -all-root -noappend -no-exports -no-xattrs
+mksquashfs opk/ pocketsnes_v1.2.3_funkey-s.opk -all-root -noappend -no-exports -no-xattrs
 md5sum opk/psnes
 rm -f opk/psnes
