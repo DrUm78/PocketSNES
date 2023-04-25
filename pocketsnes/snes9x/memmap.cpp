@@ -1368,6 +1368,8 @@ void CMemory::InitROM (bool8 Interleaved)
     memset (CompanyId, 0, 3);
 
 	ParseSNESHeader(RomHeader);
+
+	ROMCRC32 = caCRC32(ROM, CalculatedSize);
 	
 	// Try to auto-detect the DSP1 chip
 	if (!Settings.ForceNoDSP1 &&
@@ -3497,6 +3499,41 @@ void CMemory::JumboLoROMMap (bool8 Interleaved)
     WriteProtectROM ();
 }
 
+uint32 CMemory::map_mirror (uint32 size, uint32 pos)
+{
+	// from bsnes
+	if (size == 0)
+		return (0);
+	if (pos < size)
+		return (pos);
+
+	uint32	mask = 1 << 31;
+	while (!(pos & mask))
+		mask >>= 1;
+
+	if (size <= (pos & mask))
+		return (map_mirror(size, pos - mask));
+	else
+		return (mask + map_mirror(size - mask, pos - mask));
+}
+
+void CMemory::map_hirom_offset (uint32 bank_s, uint32 bank_e, uint32 addr_s, uint32 addr_e, uint32 size, uint32 offset)
+{
+	uint32	c, i, p, addr;
+
+	for (c = bank_s; c <= bank_e; c++)
+	{
+		for (i = addr_s; i <= addr_e; i += 0x1000)
+		{
+			p = (c << 4) | (i >> 12);
+			addr = (c - bank_s) << 16;
+			Map[p] = ROM + offset + map_mirror(size, addr);
+			BlockIsROM[p] = TRUE;
+			BlockIsRAM[p] = FALSE;
+		}
+	}
+}
+
 void CMemory::SPC7110HiROMMap ()
 {
     int c;
@@ -3563,6 +3600,14 @@ void CMemory::SPC7110HiROMMap ()
 		BlockIsROM [0xD00+c] = BlockIsROM [0xE00+c] = BlockIsROM [0xF00+c] = TRUE;
 		
 	}
+
+	// For Tengai Makyou (English)
+	//if (ROMCRC32 == 0xE589FB4)
+	if (strncmp((char*)&Memory.ROM [0xffc0], "HU TENGAI MAKYO ZERO ", 21) == 0 && CalculatedSize > 5242880)
+	{
+		map_hirom_offset(0x40, 0x4f, 0x0000, 0xffff, CalculatedSize, 0x600000);
+	}
+
 	S9xSpc7110Init();
 
 int sum=0;
