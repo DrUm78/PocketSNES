@@ -3985,6 +3985,10 @@ void CMemory::ApplyROMFixes ()
 	//is this even useful now?
     if (strcmp (ROMName, "ALIENS vs. PREDATOR") == 0)
 		SNESGameFixes.alienVSpredetorFix = TRUE;
+
+	// Fixes CuOnPa
+    if (strcmp (ROMId, "AC6J") == 0)
+		SNESGameFixes.cuonpaFix = TRUE;
 		
     if (strcmp (ROMName, "½°Êß°Ì§Ð½À") == 0 ||  //Super Famista
 		strcmp (ROMName, "½°Êß°Ì§Ð½À 2") == 0 || //Super Famista 2
