@@ -2,6 +2,6 @@
 Name=PocketSNES
 Comment=Super Nintendo emulator
 Icon=psnes
-Exec=psnes.sh %f
+Exec=psnes %f
 Categories=emulators
 SelectorFilter=sfc,smc,zip
