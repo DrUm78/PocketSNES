@@ -927,7 +927,6 @@ uint8 S9xGetAPUDSP ()
 			return (0);
 		return ((SoundData.channels [reg >> 4].sample >> 8) |
 			(SoundData.channels [reg >> 4].sample & 0xff));
-		
     case APU_ENVX + 0x00:
     case APU_ENVX + 0x10:
     case APU_ENVX + 0x20:
@@ -936,8 +935,20 @@ uint8 S9xGetAPUDSP ()
     case APU_ENVX + 0x50:
     case APU_ENVX + 0x60:
     case APU_ENVX + 0x70:
-		return ((uint8) S9xGetEnvelopeHeight (reg >> 4));
-		
+		if (strcasestr (Memory.ROMName, "SUPER STAR WARS")      != NULL || /* Super Star Wars */
+			strcasestr (Memory.ROMName, "SUPER EMPIRE STRIKES") != NULL || /* Super Star Wars - The Empire Strikes Back */
+			strcasestr (Memory.ROMName, "SUPER JEDI")           != NULL || /* Super Star Wars - Return of the Jedi */
+			strcasestr (Memory.ROMName, "MORTAL KOMBAT")        != NULL || /* Mortal Kombat 1, 2 and 3 */
+			strcasestr (Memory.ROMName, "ULTIMATE KOMBAT 3")    != NULL)   /* Ultimate Mortal Kombat 3 */
+		{
+			int32_t eVal = SoundData.channels [reg >> 4].envx;
+			return (eVal > 0x7F) ? 0x7F : (eVal < 0 ? 0 : eVal);
+		}
+		else
+		{
+			return ((uint8) S9xGetEnvelopeHeight (reg >> 4));
+		}
+
     case APU_ENDX:
 		// To fix speech in Magical Drop 2 6/11/00
 		//	APU.DSP [APU_ENDX] = 0;

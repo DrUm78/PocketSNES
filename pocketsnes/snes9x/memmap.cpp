@@ -3923,8 +3923,7 @@ void CMemory::ApplyROMFixes ()
 		// Tales of Phantasia
 		strncmp (ROMId, "ATV", 3) == 0 ||
 		// ActRaiser 1 & 2
-		strncasecmp (ROMName, "ACTRAISER", 9) == 0 || // Required for ActRaiser 1, case sensitive??
-		strncasecmp (ROMName, "ActRaiser", 9) == 0 ||
+		strncasecmp (ROMName, "ACTRAISER", 9) == 0 ||
 		// Soulblazer
 		strcmp (ROMName, "SOULBLAZER - 1 USA") == 0 ||
 		strcmp (ROMName, "SOULBLADER - 1") == 0 ||
