@@ -3924,6 +3924,7 @@ void CMemory::ApplyROMFixes ()
 		strncmp (ROMId, "ATV", 3) == 0 ||
 		// ActRaiser 1 & 2
 		strncasecmp (ROMName, "ACTRAISER", 9) == 0 ||
+		strncasecmp (ROMName, "ActRaiser-2", 11) == 0 ||
 		// Soulblazer
 		strcmp (ROMName, "SOULBLAZER - 1 USA") == 0 ||
 		strcmp (ROMName, "SOULBLADER - 1") == 0 ||

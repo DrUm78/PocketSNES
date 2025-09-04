@@ -935,11 +935,14 @@ uint8 S9xGetAPUDSP ()
     case APU_ENVX + 0x50:
     case APU_ENVX + 0x60:
     case APU_ENVX + 0x70:
-		if (strcasestr (Memory.ROMName, "SUPER STAR WARS")      != NULL || /* Super Star Wars */
-			strcasestr (Memory.ROMName, "SUPER EMPIRE STRIKES") != NULL || /* Super Star Wars - The Empire Strikes Back */
-			strcasestr (Memory.ROMName, "SUPER JEDI")           != NULL || /* Super Star Wars - Return of the Jedi */
-			strcasestr (Memory.ROMName, "MORTAL KOMBAT")        != NULL || /* Mortal Kombat 1, 2 and 3 */
-			strcasestr (Memory.ROMName, "ULTIMATE KOMBAT 3")    != NULL)   /* Ultimate Mortal Kombat 3 */
+		if (strcasestr (Memory.ROMName, "SUPER STAR WARS")       != NULL || /* Super Star Wars */
+			strcasestr (Memory.ROMName, "SUPER EMPIRE STRIKES")  != NULL || /* Super Star Wars - The Empire Strikes Back */
+			strcasestr (Memory.ROMName, "EMPIRE STRIKES BACK")   != NULL ||
+			strcasestr (Memory.ROMName, "SUPER JEDI")            != NULL || /* Super Star Wars - Return of the Jedi */
+			strcasestr (Memory.ROMName, "MORTAL KOMBAT")         != NULL || /* Mortal Kombat 1, 2 and 3 */
+			strcasestr (Memory.ROMName, "ULTIMATE KOMBAT 3")     != NULL || /* Ultimate Mortal Kombat 3 */
+			strcasestr (Memory.ROMName, "RR DEATH VALLEY RALLY") != NULL || /* Road Runner's Death Valley Rally */
+			strcasestr (Memory.ROMName, "ROAD RUNNER")           != NULL)
 		{
 			int32_t eVal = SoundData.channels [reg >> 4].envx;
 			return (eVal > 0x7F) ? 0x7F : (eVal < 0 ? 0 : eVal);
