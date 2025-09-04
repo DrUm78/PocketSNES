@@ -1,20 +1,14 @@
 #!/bin/sh
 
-git fetch --all
-git merge upstream/FunKey
-cd /opt/FunKey-OS
-rm -rf FunKey/output/build/PocketSNES*
-rm -f FunKey/output/target/usr/games/psnes
-make FunKey/PocketSNES-rebuild
-cp FunKey/output/target/usr/games/psnes /opt/PocketSNES/opk
-cd /opt/PocketSNES
+make clean && make
+/opt/FunKey-sdk/bin/arm-funkey-linux-musleabihf-strip psnes
 
-if  [ ! -f opk/psnes ]; then
+if  [ ! -f psnes ]; then
     echo 'Build failed!'
     exit
 fi
 
 rm -f *.opk
-mksquashfs opk/ pocketsnes_v1.2.3_funkey-s.opk -all-root -noappend -no-exports -no-xattrs
-md5sum opk/psnes
-rm -f opk/psnes
+mksquashfs psnes opk/* pocketsnes_v1.2.3_funkey-s.opk -all-root -noappend -no-exports -no-xattrs
+md5sum psnes
+make clean

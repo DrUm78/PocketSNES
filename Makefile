@@ -3,12 +3,12 @@
 
 TARGET = psnes
 
-CC  := arm-linux-gnueabihf-gcc
-CXX := arm-linux-gnueabihf-g++
-STRIP := arm-linux-gnueabihf-strip
+CC  := /opt/FunKey-sdk/usr/bin/arm-funkey-linux-musleabihf-gcc
+CXX := /opt/FunKey-sdk/usr/bin/arm-funkey-linux-musleabihf-g++
+STRIP := /opt/FunKey-sdk/usr/bin/arm-funkey-linux-musleabihf-strip
 SYSROOT := $(shell $(CC) --print-sysroot)
-SDL_CFLAGS := $(shell /mnt/c/Users/cinve/Workspace/cross_compilation_funkey/sdl/final/bin/sdl-config --cflags)
-SDL_LIBS := $(shell /mnt/c/Users/cinve/Workspace/cross_compilation_funkey/sdl/final/bin/sdl-config --libs)
+SDL_CFLAGS := $(shell /opt/FunKey-sdk/arm-funkey-linux-musleabihf/sysroot/usr/bin/sdl-config --cflags)
+SDL_LIBS := $(shell /opt/FunKey-sdk/arm-funkey-linux-musleabihf/sysroot/usr/bin/sdl-config --libs)
 
 
 #CC  := gcc
