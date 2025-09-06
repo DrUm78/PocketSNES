@@ -486,33 +486,6 @@ int S9xGetEnvelopeHeight (int channel)
     return (0);
 }
 
-#if 1
-void S9xSetSoundSample (int, uint16) 
-{
-}
-#else
-void S9xSetSoundSample (int channel, uint16 sample_number)
-{
-    register Channel *ch = &SoundData.channels[channel];
-	
-    if (ch->state != SOUND_SILENT && 
-		sample_number != ch->sample_number)
-    {
-		int keep = ch->state;
-		ch->state = SOUND_SILENT;
-		ch->sample_number = sample_number;
-		ch->loop = FALSE;
-		ch->needs_decode = TRUE;
-		ch->last_block = FALSE;
-		ch->previous [0] = ch->previous[1] = 0;
-		uint8 *dir = S9xGetSampleAddress (sample_number);
-		ch->block_pointer = READ_WORD (dir);
-		ch->sample_pointer = 0;
-		ch->state = keep;
-    }
-}
-#endif
-
 void S9xSetSoundFrequency (int channel, int hertz)
 {
     if (so.playback_rate)
@@ -521,11 +494,6 @@ void S9xSetSoundFrequency (int channel, int hertz)
 			hertz = NoiseFreq [APU.DSP [APU_FLG] & 0x1f];
 		SoundData.channels[channel].frequency = (int)
 			(((int64) hertz * FIXED_POINT) / so.playback_rate);
-		if (Settings.FixFrequency)
-		{
-			SoundData.channels[channel].frequency = 
-				(unsigned long) (SoundData.channels[channel].frequency * 49 / 50);
-		}
     }
 }
 
@@ -549,7 +517,7 @@ bool8 S9xSetSoundMute (bool8 mute)
 
 void AltDecodeBlock (Channel *ch)
 {
-    if (ch->block_pointer >= 0x10000 - 9)
+    if (ch->block_pointer > 0x10000 - 9)
     {
 		ch->last_block = TRUE;
 		ch->loop = FALSE;

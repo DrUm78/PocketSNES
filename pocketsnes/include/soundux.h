@@ -237,7 +237,6 @@ void S9xSetSoundKeyOff (int channel);
 void S9xSetSoundDecayMode (int channel);
 void S9xSetSoundAttachMode (int channel);
 void S9xSoundStartEnvelope (Channel *);
-void S9xSetSoundSample (int channel, uint16 sample_number);
 void S9xSetEchoFeedback (int echo_feedback);
 void S9xSetEchoEnable (uint8 byte);
 void S9xSetEchoDelay (int byte);
