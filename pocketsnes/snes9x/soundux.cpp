@@ -435,6 +435,53 @@ void S9xSetEnvelopeHeight (int channel, int level)
     }
 }
 
+int S9xGetEnvelopeHeight (int channel)
+{
+    if ((Settings.SoundEnvelopeHeightReading ||
+		SNESGameFixes.SoundEnvelopeHeightReading2) &&
+        SoundData.channels[channel].state != SOUND_SILENT &&
+        SoundData.channels[channel].state != SOUND_GAIN)
+    {
+        return (SoundData.channels[channel].envx);
+    }
+
+    //siren fix from XPP
+    if (SNESGameFixes.SoundEnvelopeHeightReading2 &&
+        SoundData.channels[channel].state != SOUND_SILENT)
+    {
+        return (SoundData.channels[channel].envx);
+    }
+
+    return (0);
+}
+
+#if 1
+void S9xSetSoundSample (int, uint16)
+{
+}
+#else
+void S9xSetSoundSample (int channel, uint16 sample_number)
+{
+    register Channel *ch = &SoundData.channels[channel];
+
+    if (ch->state != SOUND_SILENT &&
+		sample_number != ch->sample_number)
+    {
+		int keep = ch->state;
+		ch->state = SOUND_SILENT;
+		ch->sample_number = sample_number;
+		ch->loop = FALSE;
+		ch->needs_decode = TRUE;
+		ch->last_block = FALSE;
+		ch->previous [0] = ch->previous[1] = 0;
+		uint8 *dir = S9xGetSampleAddress (sample_number);
+		ch->block_pointer = READ_WORD (dir);
+		ch->sample_pointer = 0;
+		ch->state = keep;
+    }
+}
+#endif
+
 void S9xSetSoundFrequency (int channel, int hertz)  // hertz [0~64K<<1]
 {
 	if (SoundData.channels[channel].type == SOUND_NOISE)

@@ -644,61 +644,11 @@ again:
 		S9xMessage(S9X_ERROR,S9X_ROM_CONFUSING_FORMAT_INFO, "Warning! Hacked Dump!");
 	}
 
-#ifndef NO_SPEEDHACKS
-	/* SNESAdvance speed hacks (from the speed-hacks branch of CatSFC) */
-	if (strncmp("YOSHI'S ISLAND", (char *) &Memory.ROM[0x7FC0], 14) == 0)
-	{
-		Memory.ROM[0x0000F4] = 0x42;
-		Memory.ROM[0x0000F5] = 0x3B;
-	}
-	else if (strncmp("SUPER MARIOWORLD", (char *) &Memory.ROM[0x7FC0], 16) == 0)
-	{
-		Memory.ROM[0x00006D] = 0x42;
-	}
-	else if (strncmp("ALL_STARS + WORLD", (char *) &Memory.ROM[0x7FC0], 17) == 0)
-	{
-		Memory.ROM[0x0003D0] = 0x42;
-		Memory.ROM[0x0003D1] = 0x5B;
-		Memory.ROM[0x018522] = 0x42;
-		Memory.ROM[0x018523] = 0x5B;
-		Memory.ROM[0x02C804] = 0x42;
-		Memory.ROM[0x02C805] = 0xBA;
-		Memory.ROM[0x0683B5] = 0x42;
-		Memory.ROM[0x0683B6] = 0x5B;
-		Memory.ROM[0x0696AC] = 0x42;
-		Memory.ROM[0x0696AD] = 0xBA;
-		Memory.ROM[0x089233] = 0xDB;
-		Memory.ROM[0x089234] = 0x61;
-		Memory.ROM[0x0895DF] = 0x42;
-		Memory.ROM[0x0895E0] = 0x5B;
-		Memory.ROM[0x0A7A9D] = 0x42;
-		Memory.ROM[0x0A7A9E] = 0xBA;
-		Memory.ROM[0x1072E7] = 0x42;
-		Memory.ROM[0x1072E8] = 0xD9;
-		Memory.ROM[0x107355] = 0x42;
-		Memory.ROM[0x107356] = 0x5B;
-		Memory.ROM[0x1073CF] = 0x42;
-		Memory.ROM[0x1073D0] = 0x5B;
-		Memory.ROM[0x107443] = 0x42;
-		Memory.ROM[0x107444] = 0x5B;
-		Memory.ROM[0x107498] = 0x42;
-		Memory.ROM[0x107499] = 0x5B;
-		Memory.ROM[0x107505] = 0x42;
-		Memory.ROM[0x107506] = 0x5B;
-		Memory.ROM[0x107539] = 0x42;
-		Memory.ROM[0x10753A] = 0x5B;
-		Memory.ROM[0x107563] = 0x42;
-		Memory.ROM[0x107564] = 0x5B;
-		Memory.ROM[0x18041D] = 0x42;
-		Memory.ROM[0x18041E] = 0x79;
-	}
-#endif
-
-	int orig_hi_score, orig_lo_score;
-	int hi_score, lo_score;
+    int orig_hi_score, orig_lo_score;
+    int hi_score, lo_score;
 	
-	orig_hi_score = hi_score = ScoreHiROM (FALSE);
-	orig_lo_score = lo_score = ScoreLoROM (FALSE);
+    orig_hi_score = hi_score = ScoreHiROM (FALSE);
+    orig_lo_score = lo_score = ScoreLoROM (FALSE);
     
     if (HeaderCount == 0 && !Settings.ForceNoHeader &&
 		((hi_score > lo_score && ScoreHiROM (TRUE) > hi_score) ||
@@ -1418,7 +1368,9 @@ void CMemory::InitROM (bool8 Interleaved)
     memset (CompanyId, 0, 3);
 
 	ParseSNESHeader(RomHeader);
-	
+
+	ROMCRC32 = caCRC32(ROM, CalculatedSize);
+
 	// Try to auto-detect the DSP1 chip
 	if (!Settings.ForceNoDSP1 &&
 			(ROMType & 0xf) >= 3 && (ROMType & 0xf0) == 0)
@@ -2321,6 +2273,18 @@ void CMemory::HiROMMap ()
 	for (j=0; j<4; j++)
 		mask[j]=0x00ff;
 
+	// Bug in Snes9x 1.43
+	// This isn't really a bug, but a problem with the SNES ROM's size and header
+	// of Wonder Project (EN translation).
+	//
+	// Doing this solves Wonder Project (En), but does this work for all ROMs?
+	//
+	if (strcmp(ROMId, "APJJ") == 0)
+	{
+		if (((CalculatedSize / 0x10000) * 0x10000) != CalculatedSize)
+			CalculatedSize = ((CalculatedSize / 0x10000) * 0x10000) + 0x10000;
+	}
+
 	mask[0]=(CalculatedSize/0x10000)-1;
 
 	if (Settings.ForceSA1 ||
@@ -2488,7 +2452,7 @@ void CMemory::TalesROMMap (bool8 Interleaved)
 
 		//makes more sense to map the range here.
 		//ToP seems to use sram to skip intro???
-		if(c>=0x300)
+		if(c>=0x200) //previous "0x300" broke SMALttP ROM hack
 		{
 			Map [c + 6] = Map [c + 0x806] = (uint8 *) MAP_HIROM_SRAM;
 			Map [c + 7] = Map [c + 0x807] = (uint8 *) MAP_HIROM_SRAM;
@@ -3547,6 +3511,41 @@ void CMemory::JumboLoROMMap (bool8 Interleaved)
     WriteProtectROM ();
 }
 
+uint32 CMemory::map_mirror (uint32 size, uint32 pos)
+{
+	// from bsnes
+	if (size == 0)
+		return (0);
+	if (pos < size)
+		return (pos);
+
+	uint32	mask = 1 << 31;
+	while (!(pos & mask))
+		mask >>= 1;
+
+	if (size <= (pos & mask))
+		return (map_mirror(size, pos - mask));
+	else
+		return (mask + map_mirror(size - mask, pos - mask));
+}
+
+void CMemory::map_hirom_offset (uint32 bank_s, uint32 bank_e, uint32 addr_s, uint32 addr_e, uint32 size, uint32 offset)
+{
+	uint32	c, i, p, addr;
+
+	for (c = bank_s; c <= bank_e; c++)
+	{
+		for (i = addr_s; i <= addr_e; i += 0x1000)
+		{
+			p = (c << 4) | (i >> 12);
+			addr = (c - bank_s) << 16;
+			Map[p] = ROM + offset + map_mirror(size, addr);
+			BlockIsROM[p] = TRUE;
+			BlockIsRAM[p] = FALSE;
+		}
+	}
+}
+
 void CMemory::SPC7110HiROMMap ()
 {
     int c;
@@ -3613,6 +3612,14 @@ void CMemory::SPC7110HiROMMap ()
 		BlockIsROM [0xD00+c] = BlockIsROM [0xE00+c] = BlockIsROM [0xF00+c] = TRUE;
 		
 	}
+
+	// For Tengai Makyou (English)
+	//if (ROMCRC32 == 0xE589FB4)
+	if (strncmp((char*)&Memory.ROM [0xffc0], "HU TENGAI MAKYO ZERO", 20) == 0 && CalculatedSize > 5242880)
+	{
+		map_hirom_offset(0x40, 0x4f, 0x0000, 0xffff, CalculatedSize, 0x600000);
+	}
+
 	S9xSpc7110Init();
 
 int sum=0;
@@ -3915,8 +3922,9 @@ void CMemory::ApplyROMFixes ()
 		strncmp (ROMId, "ARF", 3) == 0 ||
 		// Tales of Phantasia
 		strncmp (ROMId, "ATV", 3) == 0 ||
-		// Act Raiser 1 & 2
-		strncasecmp (ROMName, "ActRaiser", 9) == 0 ||
+		// ActRaiser 1 & 2
+		strncasecmp (ROMName, "ACTRAISER", 9) == 0 ||
+		strncasecmp (ROMName, "ActRaiser-2", 11) == 0 ||
 		// Soulblazer
 		strcmp (ROMName, "SOULBLAZER - 1 USA") == 0 ||
 		strcmp (ROMName, "SOULBLADER - 1") == 0 ||
@@ -3990,7 +3998,11 @@ void CMemory::ApplyROMFixes ()
 	//is this even useful now?
     if (strcmp (ROMName, "ALIENS vs. PREDATOR") == 0)
 		SNESGameFixes.alienVSpredetorFix = TRUE;
-		
+
+	// Fixes CuOnPa
+	if (strcmp (ROMId, "AC6J") == 0)
+		SNESGameFixes.cuonpaFix = TRUE;
+
     if (strcmp (ROMName, "½°Êß°Ì§Ð½À") == 0 ||  //Super Famista
 		strcmp (ROMName, "½°Êß°Ì§Ð½À 2") == 0 || //Super Famista 2
 		strcmp (ROMName, "ZENKI TENCHIMEIDOU") == 0 ||

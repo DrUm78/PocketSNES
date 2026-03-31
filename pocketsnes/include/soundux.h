@@ -218,6 +218,7 @@ void S9xSetFilterCoefficient (int tap, int value);
 void S9xSetFrequencyModulationEnable (uint8 byte);
 void S9xSetEnvelopeRate (int channel, unsigned long rate, int direction, int target, unsigned int mode);
 bool8 S9xSetSoundMode (int channel, int mode);
+int S9xGetEnvelopeHeight (int channel);
 void S9xResetSound (bool8 full);
 void S9xFixSoundAfterSnapshotLoad ();
 void S9xPlaybackSoundSetting (int channel);

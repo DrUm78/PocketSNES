@@ -2,7 +2,7 @@
 
 TARGET = ./dist/PocketSNES.dge
 
-CROSS_COMPILE ?= mipsel-linux-
+CROSS_COMPILE ?= /opt/gcw0-toolchain-gcc11.1.0/bin/mipsel-gcw0-linux-uclibc-
 
 CC  := $(CROSS_COMPILE)gcc
 CXX := $(CROSS_COMPILE)g++

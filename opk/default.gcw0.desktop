@@ -1,12 +1,9 @@
 [Desktop Entry]
 Name=PocketSNES
-Comment=Super Nintendo emulator
+Comment=Nintendo Super NES/Famicom emulator
 Comment[fr]=Émulateur de Super Nintendo
 Comment[es]=Emulador de Super Nintendo
 Exec=PocketSNES.dge %f
-Terminal=false
-Type=Application
-StartupNotify=true
 Icon=sfc
-Categories=emulators;
+Categories=emulators
 MimeType=application/x-snes-rom;application/zip;

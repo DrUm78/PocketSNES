@@ -965,6 +965,7 @@ void ShowCredits()
 	strcpy(mMenuText[menuCount++],"Port to RetroGame by Steward-Fu");
 	strcpy(mMenuText[menuCount++],"RetroGame optimizations by Sauce,");
 	strcpy(mMenuText[menuCount++],"pingflood and m45t3r");
+	strcpy(mMenuText[menuCount++],"Compatibility fixes by DrUm78");
 
 	sal_InputIgnore();
 	while (!menuExit)

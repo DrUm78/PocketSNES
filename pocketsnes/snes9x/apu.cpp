@@ -777,6 +777,18 @@ uint8 S9xGetAPUDSP ()
     case APU_ENVX + 0x50:
     case APU_ENVX + 0x60:
     case APU_ENVX + 0x70:
+		// DrUm78: Those games require the old code to be playable (most of them have the "long note" bug though)
+		// The list may be updated if some other games are identifed as non-working with the new code
+		if (strcasestr (Memory.ROMName, "HU TENGAI MAKYO ZERO" ) != NULL || /* Tengai Makyo Zero */
+			strcasestr (Memory.ROMName, "JUMP TENGAIMAKYO ZERO") != NULL ||
+			strcasestr (Memory.ROMName, "CLAY FIGHTER"         ) != NULL || /* Clay Fighter 1 & 2 */
+			strcasestr (Memory.ROMName, "CLAYFIGHTER"          ) != NULL ||
+			strcasestr (Memory.ROMName, "CLAYMATES"            ) != NULL ||
+			strcasestr (Memory.ROMName, "WEAPONLORD"           ) != NULL)   /* WeaponLord */
+		{
+			return ((uint8) S9xGetEnvelopeHeight (reg >> 4));
+		}
+		else
 		{
 			int32_t eVal = SoundData.channels [reg >> 4].envx;
 			return (eVal > 0x7F) ? 0x7F : (eVal < 0 ? 0 : eVal);
