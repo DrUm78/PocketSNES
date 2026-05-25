@@ -168,9 +168,13 @@ s32 MenuMessageBox(const char *message1, const char *message2,
      {
        select=SAL_ERROR; // Down
      }
-     if ((keys&INP_BUTTON_MENU_SELECT) || (keys&INP_BUTTON_MENU_CANCEL))
+     if (keys&INP_BUTTON_MENU_SELECT)
      {
         subaction=select;
+     }
+     else if (keys&INP_BUTTON_MENU_CANCEL)
+     {
+        subaction=0;
      }
      PrintTitle("Message Box");
      sal_VideoPrint(8,50,message1,SAL_RGB(31,31,31));
@@ -749,19 +753,51 @@ static s32 SaveStateSelect(s32 mode)
 	      
 		if(keys&INP_BUTTON_MENU_CANCEL) action=0; // exit
 		else if((keys&INP_BUTTON_MENU_SELECT)&&(saveno==-1)) action=0; // exit
-		else if((keys&INP_BUTTON_MENU_SELECT)&&(mode==0)&&((action==2)||(action==5))) action=6;  // pre-save mode
+		else if((keys&INP_BUTTON_MENU_SELECT)&&(mode==0)&&((action==2)||(action==5)))
+		{
+			if (mSaveState[saveno].inUse == 1)
+			{
+				if (MenuMessageBox("This slot already has a save.","Do you want to overwrite it?","", MENU_MESSAGE_BOX_MODE_YESNO) == SAL_OK)
+				{
+					action = 6;  // Confirmed: proceed to save
+				}
+			}
+			else
+			{
+				action = 6;  // Slot is free: save directly
+			}
+		}
 		else if((keys&INP_BUTTON_MENU_SELECT)&&(mode==1)&&(action==5)) action=8;  // pre-load mode
 		else if((keys&INP_BUTTON_MENU_SELECT)&&(mode==2)&&(action==5)
 		|| (keys&SAL_INPUT_X)&&(mode==0))
 		{
-			if(MenuMessageBox("Are you sure you want to delete","this save?","",MENU_MESSAGE_BOX_MODE_YESNO)==SAL_OK) action=13;  //delete slot with no preview
+			if (mSaveState[saveno].inUse == 1)
+			{
+				if(MenuMessageBox("Are you sure you want to delete","this save?","",MENU_MESSAGE_BOX_MODE_YESNO)==SAL_OK) action=13;  //delete slot with no preview
+			}
 		}
 		else if((keys&INP_BUTTON_MENU_PREVIEW_SAVESTATE)&&(action==12)) action=3;  // preview slot mode
 		else if((keys&INP_BUTTON_MENU_SELECT)&&(mode==1)&&(action==12)) action=8;  //load slot with no preview
-		else if((keys&INP_BUTTON_MENU_SELECT)&&(mode==0)&&(action==12)) action=6;  //save slot with no preview
+		else if((keys&INP_BUTTON_MENU_SELECT)&&(mode==0)&&(action==12))
+		{
+			if (mSaveState[saveno].inUse == 1)
+			{
+				if (MenuMessageBox("This slot already has a save.","Do you want to overwrite it?","", MENU_MESSAGE_BOX_MODE_YESNO) == SAL_OK)
+				{
+					action = 6;  // Confirmed: proceed to save
+				}
+			}
+			else
+			{
+				action = 6;  // Slot is free: save directly
+			}
+		}
 		else if((keys&INP_BUTTON_MENU_SELECT)&&(mode==2)&&(action==12))
 		{
-			if(MenuMessageBox("Are you sure you want to delete","this save?","",MENU_MESSAGE_BOX_MODE_YESNO)==SAL_OK) action=13;  //delete slot with no preview
+			if (mSaveState[saveno].inUse == 1)
+			{
+				if(MenuMessageBox("Are you sure you want to delete","this save?","",MENU_MESSAGE_BOX_MODE_YESNO)==SAL_OK) action=13;  //delete slot with no preview
+			}
 		}
 
 		PrintTitle("Save States");
@@ -965,7 +1001,8 @@ void ShowCredits()
 	strcpy(mMenuText[menuCount++],"Port to RetroGame by Steward-Fu");
 	strcpy(mMenuText[menuCount++],"RetroGame optimizations by Sauce,");
 	strcpy(mMenuText[menuCount++],"pingflood and m45t3r");
-	strcpy(mMenuText[menuCount++],"Compatibility fixes by DrUm78");
+	strcpy(mMenuText[menuCount++],"Compatibility fixes and various");
+	strcpy(mMenuText[menuCount++],"menu improvements by DrUm78");
 
 	sal_InputIgnore();
 	while (!menuExit)
@@ -1324,8 +1361,12 @@ s32 SettingsMenu(void)
 					}
 					break;
 				case MENU_CREDITS:
+					char savedMenuText[30][MAX_DISPLAY_CHARS];
+					memcpy(savedMenuText, mMenuText, sizeof(mMenuText));
+
 					ShowCredits();
-					MainMenuUpdateTextAll();
+
+					memcpy(mMenuText, savedMenuText, sizeof(mMenuText));
 					break;
 			}
 		}
