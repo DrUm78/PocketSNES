@@ -173,12 +173,19 @@ bool8_32 S9xDeinitUpdate (int Width, int Height, bool8_32)
 	{
 		case 0: /* No scaling */
 		// case 3: /* Hardware scaling */
+		case 4: /* Crop scaling */
 		{
 			u32 h = PAL ? SNES_HEIGHT_EXTENDED : SNES_HEIGHT;
 			u32 y, pitch = sal_VideoGetPitch();
-			u8 *src = (u8*) IntermediateScreen, *dst = (u8*) sal_VideoGetBuffer()
-				+ ((sal_VideoGetWidth() - SNES_WIDTH) / 2) * sizeof(u16)
-				+ ((sal_VideoGetHeight() - h) / 2) * pitch;
+			u8 *src = (u8*) IntermediateScreen, *dst = (u8*) sal_VideoGetBuffer();
+
+			if (mMenuOptions.fullScreen == 4) { // crop; use ipu to center
+				src += 23 * SNES_WIDTH * sizeof(u16);
+				h -= 32;
+			} else { // original; center on screen
+				dst += ((sal_VideoGetWidth() - SNES_WIDTH) / 2) * sizeof(u16)
+				     + ((sal_VideoGetHeight() - h) / 2) * pitch;
+			}
 			for (y = 0; y < h; y++)
 			{
 				memmove(dst, src, SNES_WIDTH * sizeof(u16));
@@ -262,35 +269,35 @@ uint32 S9xReadJoypad (int which1)
 	switch(mMenuOptions.menuKeystroke)
 	{
 		case 0:
-        		if (((joy & SAL_INPUT_SELECT) && (joy & SAL_INPUT_START))
-        		 || (joy & SAL_INPUT_MENU))
-        		{
-                		mEnterMenu = 1;
-                		return val;
-		        }
+			if (((joy & SAL_INPUT_SELECT) && (joy & SAL_INPUT_START))
+			 || (joy & SAL_INPUT_MENU))
+			{
+				mEnterMenu = 1;
+				return val;
+			}
 			break;
 		case 1:
-                        if (((joy & SAL_INPUT_L) && (joy & SAL_INPUT_R))
-                         || (joy & SAL_INPUT_MENU))
-                        {
-                                mEnterMenu = 1;
-                                return val;
-                        }
+			if (((joy & SAL_INPUT_L) && (joy & SAL_INPUT_R))
+			 || (joy & SAL_INPUT_MENU))
+			{
+				mEnterMenu = 1;
+				return val;
+			}
 			break;
 		case 2:
-                        if (((joy & SAL_INPUT_SELECT) && (joy & SAL_INPUT_START) && (joy & SAL_INPUT_L) && (joy & SAL_INPUT_R))
-                         || (joy & SAL_INPUT_MENU))
-                        {
-                                mEnterMenu = 1;
-                                return val;
-                        }
+			if (((joy & SAL_INPUT_SELECT) && (joy & SAL_INPUT_START) && (joy & SAL_INPUT_L) && (joy & SAL_INPUT_R))
+			 || (joy & SAL_INPUT_MENU))
+			{
+				mEnterMenu = 1;
+				return val;
+			}
 			break;
 		default:
-                        if ((joy & SAL_INPUT_MENU))
-                        {
-                                mEnterMenu = 1;
-                                return val;
-                        }
+			if ((joy & SAL_INPUT_MENU))
+			{
+				mEnterMenu = 1;
+				return val;
+			}
 			break;
 	}
 	
@@ -335,7 +342,7 @@ uint32 S9xReadJoypad (int which1)
 	if (joy & SAL_INPUT_A) val |= SNES_A_MASK;
 	if (joy & SAL_INPUT_B) val |= SNES_B_MASK;
 	if (joy & SAL_INPUT_X) val |= SNES_X_MASK;
-		
+
 	if (joy & SAL_INPUT_UP) 	val |= SNES_UP_MASK;
 	if (joy & SAL_INPUT_DOWN) 	val |= SNES_DOWN_MASK;
 	if (joy & SAL_INPUT_LEFT) 	val |= SNES_LEFT_MASK;
@@ -439,8 +446,6 @@ void S9xSaveSRAM (int showWarning)
 		MenuMessageBox("SRAM saving ignored","No changes have been made to SRAM","",MENU_MESSAGE_BOX_MODE_MSG);
 	}
 }
-
-
 
 }
 

@@ -2,7 +2,7 @@
 
 cd $(dirname $0)
 
-OPK_NAME="${1:-PocketSNES_v1.2.3_gcw0.opk}"
+OPK_NAME="${1:-PocketSNES_gcw0.opk}"
 
 echo Building "${OPK_NAME}"...
 

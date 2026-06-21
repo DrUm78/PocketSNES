@@ -31,6 +31,10 @@ endif
 
 CXXFLAGS = $(CFLAGS) -std=gnu++03 -fno-exceptions -fno-rtti -fno-math-errno -fno-threadsafe-statics
 
+# Revision info from repository
+GIT_REVISION ?= $(shell git rev-parse --short HEAD || echo unknown)
+CFLAGS += -DREVISION=\"$(GIT_REVISION)\"
+
 LDFLAGS = $(CXXFLAGS) -lz -lpng $(SDL_LIBS) -Wl,-O1,--sort-common,--as-needed
 ifdef HUGE_PAGES
 LDFLAGS += -Wl,-zcommon-page-size=2097152 -Wl,-zmax-page-size=2097152 -lhugetlbfs
