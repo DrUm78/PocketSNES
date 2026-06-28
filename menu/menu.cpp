@@ -997,7 +997,7 @@ void ShowCredits()
 	s32 menuExit=0,menuCount=0,menufocus=0,menuSmooth=0;
 	u32 keys=0;
 
-	strcpy(mMenuText[menuCount++],"PocketSNES (git rev. " REVISION")");
+	strcpy(mMenuText[menuCount++],"PocketSNES - git rev. " REVISION);
 	strcpy(mMenuText[menuCount++],"Built on " __DATE__ " with GCC " TOSTRING(__GNUC__) "." TOSTRING(__GNUC_MINOR__) "." TOSTRING(__GNUC_PATCHLEVEL__));
 	strcpy(mMenuText[menuCount++],"https://github.com/DrUm78/PocketSNES");
 	strcpy(mMenuText[menuCount++],"-------------------------------------");

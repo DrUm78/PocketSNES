@@ -293,7 +293,7 @@ uint32 S9xReadJoypad (int which1)
 			}
 			break;
 		default:
-			if ((joy & SAL_INPUT_MENU))
+			if (joy & SAL_INPUT_MENU)
 			{
 				mEnterMenu = 1;
 				return val;
